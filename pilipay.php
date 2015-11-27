@@ -1,6 +1,7 @@
 <?php
 
 // todo: PHP 兼容性检查 -- 至少兼任5.2
+// todo: 更新运单号
 
 if (!defined('_PS_VERSION_'))
     exit;
@@ -22,6 +23,10 @@ class Pilipay extends PaymentModule
     const OS_ERROR = 'PS_OS_ERROR'; // order status: with error
     const OS_REFUND = 'PS_OS_REFUND'; // order status: refund
 
+    /**
+     * Module constructor
+     * @throws PrestaShopException
+     */
     public function __construct()
     {
         $this->name = 'pilipay';
@@ -57,9 +62,17 @@ class Pilipay extends PaymentModule
         if (!count(Currency::checkPaymentCurrencies($this->id))) {
             $this->warning = $this->l('No currency has been set for this module.');
         }
+
+        // set log handler
+        PilipayLogger::instance()->setHandler(array(__CLASS__, 'log'));
     }
 
-    // 安装模块, 注册各种钩子
+    /**
+     * Install this module. Register hooks and initiate.
+     * 安装模块, 注册各种钩子
+     * @return bool success or not
+     * @throws PrestaShopException
+     */
     public function install()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
@@ -73,7 +86,10 @@ class Pilipay extends PaymentModule
         return true;
     }
 
-    // 卸载,清空配置
+    /**
+     * 卸载,清空配置
+     * @return bool
+     */
     public function uninstall()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
@@ -92,18 +108,20 @@ class Pilipay extends PaymentModule
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
         if (Tools::isSubmit('btnSubmit')) { // POST request
-            $this->_postValidation();
-            if (!count($this->_postErrors))
-                $this->_postProcess();
-            else
-                foreach ($this->_postErrors as $err)
+            $this->_verifyConfigFromPost();
+            if (!count($this->_postErrors)) {
+                $this->_saveConfigFromPost();
+            } else {
+                foreach ($this->_postErrors as $err) {
                     $this->_html .= $this->displayError($err);
+                }
+            }
         } else { // GET request:
             $this->_html .= '<br />';
         }
 
-        $this->_html .= $this->_displayInfo();
-        $this->_html .= $this->renderForm();
+        $this->_html .= $this->_renderConfigForm();
+        $this->_html .= $this->display(__FILE__, 'config-helper.tpl'); // 帮助信息
 
         return $this->_html;
     }
@@ -123,6 +141,7 @@ class Pilipay extends PaymentModule
             'this_path_bw' => $this->_path,
             'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/'
         ));
+
         return $this->display(__FILE__, 'payment.tpl'); // todo: 这个样式有点小问题
     }
 
@@ -130,15 +149,17 @@ class Pilipay extends PaymentModule
     public function hookDisplayPaymentEU($params)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
-        if (!$this->active)
+        if (!$this->active){
             return;
+        }
 
-        if (!$this->checkCurrency($params['cart']))
+        if (!$this->checkCurrency($params['cart'])){
             return;
+        }
 
         $payment_options = array(
-            'cta_text' => $this->l('Pay by Pilibaba'),
-            'logo' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/powered-by-pilibaba.jpg'),
+            'cta_text' => $this->l('Pay via Pilibaba'),
+            'logo' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/checkout.png'),
             'action' => $this->context->link->getModuleLink($this->name, 'validation', array(), true)
         );
 
@@ -150,15 +171,11 @@ class Pilipay extends PaymentModule
     // URL: GET /index.php?controller=order-confirmation&id_cart=10&id_module=74&id_order=9&key=8e0c7339b2467173557e0aa17bf8bbb5
     public function hookPaymentReturn($params)
     {
-        // test
-        $orderStates = OrderState::getOrderStates($this->context->language->id);
-
-
-        ///
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
 
-        if (!$this->active)
+        if (!$this->active) {
             return;
+        }
 
         $state = $params['objOrder']->getCurrentState();
 
@@ -169,8 +186,10 @@ class Pilipay extends PaymentModule
                 'status' => 'ok',
                 'id_order' => $params['objOrder']->id
             ));
-            if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference))
+
+            if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)){
                 $this->smarty->assign('reference', $params['objOrder']->reference);
+            }
         } else {
             $this->smarty->assign('status', 'failed');
         }
@@ -224,7 +243,7 @@ class Pilipay extends PaymentModule
     }
 
     // 渲染[设置]页面的下方的表单,用于设置内容
-    public function renderForm()
+    protected function _renderConfigForm()
     {
         $fields_form = array(
             'form' => array(
@@ -240,7 +259,7 @@ class Pilipay extends PaymentModule
                         'required' => true
                     ),
                     array(
-                        'type' => 'text',
+                        'type' => 'password',
                         'label' => $this->l('Secret key'),
                         'name' => self::PILIPAY_APP_SECRET,
                         'required' => true
@@ -318,29 +337,144 @@ class Pilipay extends PaymentModule
         $currency = $context->currency;
         $total = (float)$cart->getOrderTotal(true, Cart::BOTH);
 
-        // todo...
+        // 修改订单状态为待从pilibaba支付
         $this->validateOrder($cart->id, Configuration::get(self::OS_AWAITING), $total,
             $this->displayName, null, null, (int)$currency->id, false, $customer->secure_key);
 
-        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $cart->id .
-            '&id_module=' . $this->id . '&id_order=' . $this->currentOrder .
-            '&key=' . $customer->secure_key);
+        // 支付完成后的回调地
+        $paidCallbackUrl = $this->context->link->getModuleLink($this->name, 'result', [], true);
+
+        $order = new Order($this->currentOrder);
+        if (!Validate::isLoadedObject($order)){
+            die($this->l('This order is invalid.', 'pilipay'));
+        }
+
+        try {
+
+            // create an order
+            $pilipayOrder = new PilipayOrder();
+            $pilipayOrder->merchantNO = Configuration::get(self::PILIPAY_MERCHANT_NO);  // a number for a merchant from pilibaba
+            $pilipayOrder->appSecret = Configuration::get(self::PILIPAY_APP_SECRET); // the secret key from pilibaba
+            $pilipayOrder->currencyType = $this->_getAbbrOfCurrency($currency); // indicates the unit of the following orderAmount, shipper, tax and price
+            $pilipayOrder->orderNo = $order->id;
+            $pilipayOrder->orderAmount = $total;
+            $pilipayOrder->orderTime = date('Y-m-d H:i:s');
+            $pilipayOrder->sendTime = date('Y-m-d H:i:s');
+            $pilipayOrder->pageUrl = $_SERVER['HTTP_ORIGIN'] . '/index.php?controller=history';
+            $pilipayOrder->serverUrl = $paidCallbackUrl;
+            $pilipayOrder->shipper = $order->total_shipping;
+            $pilipayOrder->tax = $total - $cart->getOrderTotal(false);
+
+            // create a good
+            foreach ($order->getProducts() as $product) {
+                // 税前价格:
+                $price = Product::getPriceStatic((int)$product['id_product'], false,
+                    ($product['id_product_attribute'] ? (int)$product['id_product_attribute'] : null),
+                    6, null, false, true, $product['cart_quantity'], false,
+                    (int)$order->id_customer, (int)$order->id_cart,
+                    (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
+                // 税后价格:
+                $price_wt = Product::getPriceStatic((int)$product['id_product'], true,
+                    ($product['id_product_attribute'] ? (int)$product['id_product_attribute'] : null),
+                    2, null, false, true, $product['cart_quantity'], false,
+                    (int)$order->id_customer, (int)$order->id_cart,
+                    (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
+                $product_price = (Product::getTaxCalculationMethod() == PS_TAX_EXC
+                    ? Tools::ps_round($price, 2) : $price_wt);
+
+                $productObj = new Product($product['product_id']);
+                $productUrl = $context->link->getProductLink($productObj);
+                if (!empty($product['image'])){
+                    $img = $product['image'];
+                    if ($img instanceof Image){
+                        $productPictureUrl = $context->link->getImageLink($img->id_image, $img->id_image);
+                    }
+                }
+
+                $pilipayGood = new PilipayGood();
+                $pilipayGood->name = $product['product_name'] . (isset($product['attributes']) ? ' - ' . $product['attributes'] : '');
+                $pilipayGood->pictureUrl = $productPictureUrl;
+                $pilipayGood->price = $price;
+                $pilipayGood->productUrl = $productUrl;
+                $pilipayGood->productId = $product['product_id'];
+                $pilipayGood->quantity = $product['product_quantity'];
+                $pilipayGood->weight = $product['product_weight']; // todo ...
+                $pilipayGood->weightUnit = 'kg'; // default kg for presta shop. todo: is there any other unit?
+                $pilipayGood->width = $product['product_width'] * 10; // 10: cm -> mm
+                $pilipayGood->height = $product['product_height'] * 10;// 10: cm -> mm
+                $pilipayGood->length = $product['product_length'] * 10;// 10: cm -> mm
+
+                // add the good to order
+                $pilipayOrder->addGood($pilipayGood);
+
+            }
+
+            // render submit form
+            echo $pilipayOrder->renderSubmitForm();
+            die;
+        } catch (PilipayError $e) {
+            self::log("Error:" . $e->getMessage());
+            die($e->getMessage());
+        }
+    }
+
+    /**
+     * process the pay result
+     */
+    public function processPayResult(){
+        try {
+            $payResult = PilipayPayResult::fromRequest();
+            if (!$payResult->verify(Configuration::get(self::PILIPAY_APP_SECRET))){
+//                die('Invalid request'); // todo..
+            }
+
+            $order = new Order($payResult->orderNo);
+            if (strcasecmp($order->payment, $this->name) !== 0){
+                die('This order is not paid via '.$this->name);
+            }
+
+            $orderState = $payResult->isSuccess() ? self::OS_PAID : self::OS_ERROR;
+            self::log('info', "order {$order->id} is to be updated to {$orderState} via {$this->name}");
+
+            $orderHistory = new OrderHistory();
+            $orderHistory->id_order = $order->id;
+            $orderHistory->changeIdOrderState(Configuration::get($orderState), $order);
+            $orderHistory->addWithemail();
+
+            self::log('info', "order {$order->id} state updated to " . $orderState);
+        } catch (PilipayError $e){
+            die($e->getMessage());
+        }
+    }
+
+    /**
+     * @param Currency $currency
+     * @return string
+     */
+    public function _getAbbrOfCurrency($currency){
+        switch ($currency->iso_code){
+            case 'SGD': return 'USD';
+            // todo...
+            default:
+                throw new Exception("Unsupported currency type: {$currency->iso_code}! Please choose other payment methods.");
+        }
     }
 
     // 后台[设置]页面中: 验证输入内容
-    protected function _postValidation()
+    protected function _verifyConfigFromPost()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
         if (Tools::isSubmit('btnSubmit')) {
-            if (!Tools::getValue(self::PILIPAY_MERCHANT_NO))
+            if (!Tools::getValue(self::PILIPAY_MERCHANT_NO)){
                 $this->_postErrors[] = $this->l('Merchant number is required.');
-            elseif (!Tools::getValue(self::PILIPAY_APP_SECRET))
+            } else if (!Tools::getValue(self::PILIPAY_APP_SECRET)){
                 $this->_postErrors[] = $this->l('Secret key is required.');
+            }
         }
     }
 
     // 后台[设置]页面中: 保存数据
-    protected function _postProcess()
+    protected function _saveConfigFromPost()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
         if (Tools::isSubmit('btnSubmit')) {
@@ -350,33 +484,14 @@ class Pilipay extends PaymentModule
         $this->_html .= $this->displayConfirmation($this->l('Settings updated'));
     }
 
-    // 后台[设置]页面中: 显示警告信息
-    protected function _displayInfo()
+    /**
+     * record a log message
+     * @param string $level
+     * @param string $msg
+     */
+    public static function log($level, $msg='')
     {
-        return $this->display(__FILE__, 'infos.tpl'); // 警告内容
-    }
-
-    //////////// debug functions /////////////
-    public static function getParentClasses($obj)
-    {
-        $class = new ReflectionClass($obj);
-        $parents = [];
-
-        while ($class && !in_array($class->getName(), $parents)) {
-            $parents[] = $class->getName();
-            $class = $class->getParentClass();
-        }
-
-        return $parents;
-    }
-
-    public static function log($msg, $args = array())
-    {
-        if (!empty($args)) {
-            $msg = strtr($msg, $args);
-        }
-
-        $msg = date('Y-m-d H:i:s ') . $msg . PHP_EOL;
+        $msg = date('Y-m-d H:i:s ') . $level . ' '. $msg . PHP_EOL;
         $msg .= sprintf(' -- %s %s with request: %s', $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'], json_encode($_REQUEST));
 
         $e = new Exception();
