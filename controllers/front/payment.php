@@ -2,6 +2,7 @@
 /**
  * @since 1.5.0
  * @property Pilipay $module
+ * 订单信息汇总, 确认支付
  */
 class PilipayPaymentModuleFrontController extends ModuleFrontController
 {
