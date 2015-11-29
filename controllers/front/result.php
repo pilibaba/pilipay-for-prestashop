@@ -2,7 +2,7 @@
 
 /**
  * @property Pilipay $module
- * 支付结果处理
+ * Interface of dealing pay result from pilibaba
  */
 class PilipayResultModuleFrontController extends ModuleFrontController
 {

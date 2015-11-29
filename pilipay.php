@@ -10,6 +10,9 @@ require_once(dirname(__FILE__).'/pilipay/autoload.php');
 
 class Pilipay extends PaymentModule
 {
+    const     IS_IN_DEBUG_MODE = true; // is to debug?
+    const     LOG_PATH = '/var/log/prestashop/pilipay.log';
+
     protected $_html = '';
     protected $_postErrors = array();
 
@@ -35,7 +38,7 @@ class Pilipay extends PaymentModule
         $this->version = '1.0';
         $this->author = 'Pilibaba';
         $this->controllers = array('payment', 'validation');
-        $this->is_eu_compatible = 1; // todo what should I do to be compatible with EU?
+        $this->is_eu_compatible = 0; // = 1; todo: what should I do to be compatible with EU?
 
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
@@ -77,8 +80,9 @@ class Pilipay extends PaymentModule
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
         if (!parent::install()
-            || !$this->registerHook('payment')
-            || !$this->registerHook('displayPaymentEU')
+            || !$this->registerHook('payment') // -> hookPayment()
+//            || !$this->registerHook('displayPaymentEU') // todo: EU compatible?
+            || !$this->registerHook('actionAdminOrdersTrackingNumberUpdate')
             || !$this->registerHook('paymentReturn')
             || !$this->_createOrderStates()){
             return false;
@@ -126,8 +130,10 @@ class Pilipay extends PaymentModule
         return $this->_html;
     }
 
-    // [前台]下单时选择支付的方式页面
-    // 返回: 本支付方式对应的选项的html
+    /**
+     * @param $params
+     * @return string html for this payment in the options of all payments available during select payment when checking out
+     */
     public function hookPayment($params)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
@@ -142,31 +148,33 @@ class Pilipay extends PaymentModule
             'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/'
         ));
 
-        return $this->display(__FILE__, 'payment.tpl'); // todo: 这个样式有点小问题
+        // when click: POST to pilipay/controllers/front/validation
+        // then to Pilipay::performValidation
+        // to submit order to pilibaba.
+        return $this->display(__FILE__, 'payment.tpl');
     }
 
-    // todo: ???
-    public function hookDisplayPaymentEU($params)
-    {
-        self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
-        if (!$this->active){
-            return;
-        }
+    // todo: how to make EU compatible?
+//    public function hookDisplayPaymentEU($params)
+//    {
+//        self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
+//        if (!$this->active){
+//            return;
+//        }
+//
+//        if (!$this->checkCurrency($params['cart'])){
+//            return;
+//        }
+//
+//        $payment_options = array(
+//            'cta_text' => $this->l('Pay via Pilibaba'),
+//            'logo' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/checkout.png'),
+//            'action' => $this->context->link->getModuleLink($this->name, 'validation', array(), true)
+//        );
+//
+//        return $payment_options;
+//    }
 
-        if (!$this->checkCurrency($params['cart'])){
-            return;
-        }
-
-        $payment_options = array(
-            'cta_text' => $this->l('Pay via Pilibaba'),
-            'logo' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/checkout.png'),
-            'action' => $this->context->link->getModuleLink($this->name, 'validation', array(), true)
-        );
-
-        return $payment_options;
-    }
-
-    // todo: ???
     // 支付返回页面
     // URL: GET /index.php?controller=order-confirmation&id_cart=10&id_module=74&id_order=9&key=8e0c7339b2467173557e0aa17bf8bbb5
     public function hookPaymentReturn($params)
@@ -195,6 +203,28 @@ class Pilipay extends PaymentModule
         }
 
         return $this->display(__FILE__, 'payment_return.tpl');
+    }
+
+    /**
+     * hook: after updated tracking number
+     * @param $params
+     */
+    public function hookActionAdminOrdersTrackingNumberUpdate($params){
+        self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
+
+        try {
+            /**@var $order Order */
+            $order = $params['order'];
+            /**@var $carrier Carrier */
+            $carrier = $params['carrier'];
+
+            $pilipayOrder = new PilipayOrder();
+            $pilipayOrder->merchantNO = Configuration::get(self::PILIPAY_MERCHANT_NO);
+            $pilipayOrder->orderNo = $order->id;
+            $pilipayOrder->updateTrackNo($order->getWsShippingNumber());
+        } catch (PilipayError $e){
+            self::log('error', $e->getMessage());
+        }
     }
 
     // create order status
@@ -341,7 +371,7 @@ class Pilipay extends PaymentModule
         $this->validateOrder($cart->id, Configuration::get(self::OS_AWAITING), $total,
             $this->displayName, null, null, (int)$currency->id, false, $customer->secure_key);
 
-        // 支付完成后的回调地
+        // 支付完成后的回调URL
         $paidCallbackUrl = $this->context->link->getModuleLink($this->name, 'result', [], true);
 
         $order = new Order($this->currentOrder);
@@ -360,10 +390,10 @@ class Pilipay extends PaymentModule
             $pilipayOrder->orderAmount = $total;
             $pilipayOrder->orderTime = date('Y-m-d H:i:s');
             $pilipayOrder->sendTime = date('Y-m-d H:i:s');
-            $pilipayOrder->pageUrl = $_SERVER['HTTP_ORIGIN'] . '/index.php?controller=history';
+            $pilipayOrder->pageUrl = self::_getHttpHost() . '/index.php?controller=history';
             $pilipayOrder->serverUrl = $paidCallbackUrl;
             $pilipayOrder->shipper = $order->total_shipping;
-            $pilipayOrder->tax = $total - $cart->getOrderTotal(false);
+            $pilipayOrder->tax = (Product::getTaxCalculationMethod() == PS_TAX_EXC ? $total - $cart->getOrderTotal(false) : 0);
 
             // create a good
             foreach ($order->getProducts() as $product) {
@@ -379,8 +409,8 @@ class Pilipay extends PaymentModule
                     2, null, false, true, $product['cart_quantity'], false,
                     (int)$order->id_customer, (int)$order->id_cart,
                     (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
-                $product_price = (Product::getTaxCalculationMethod() == PS_TAX_EXC
-                    ? Tools::ps_round($price, 2) : $price_wt);
+                // 判断下该使用哪个价格
+                $product_price = (Product::getTaxCalculationMethod() == PS_TAX_EXC ? Tools::ps_round($price, 2) : $price_wt);
 
                 $productObj = new Product($product['product_id']);
                 $productUrl = $context->link->getProductLink($productObj);
@@ -394,7 +424,7 @@ class Pilipay extends PaymentModule
                 $pilipayGood = new PilipayGood();
                 $pilipayGood->name = $product['product_name'] . (isset($product['attributes']) ? ' - ' . $product['attributes'] : '');
                 $pilipayGood->pictureUrl = $productPictureUrl;
-                $pilipayGood->price = $price;
+                $pilipayGood->price = $product_price;
                 $pilipayGood->productUrl = $productUrl;
                 $pilipayGood->productId = $product['product_id'];
                 $pilipayGood->quantity = $product['product_quantity'];
@@ -422,15 +452,17 @@ class Pilipay extends PaymentModule
      * process the pay result
      */
     public function processPayResult(){
+        $backUrl = self::_getHttpHost();
+
         try {
             $payResult = PilipayPayResult::fromRequest();
-            if (!$payResult->verify(Configuration::get(self::PILIPAY_APP_SECRET))){
-//                die('Invalid request'); // todo..
+            if (!$payResult->verify(Configuration::get(self::PILIPAY_APP_SECRET)) && !self::IS_IN_DEBUG_MODE){
+                $this->_dieWithNotifyResult(400, 'Invalid request', $backUrl);
             }
 
             $order = new Order($payResult->orderNo);
             if (strcasecmp($order->payment, $this->name) !== 0){
-                die('This order is not paid via '.$this->name);
+                $this->_dieWithNotifyResult(401, 'This order is not paid via '.$this->name, $backUrl);
             }
 
             $orderState = $payResult->isSuccess() ? self::OS_PAID : self::OS_ERROR;
@@ -442,8 +474,11 @@ class Pilipay extends PaymentModule
             $orderHistory->addWithemail();
 
             self::log('info', "order {$order->id} state updated to " . $orderState);
+
+            $backUrl .= '/index.php?controller=history'; // todo: any good back url?
+            $this->_dieWithNotifyResult(1, 'Success', $backUrl);
         } catch (PilipayError $e){
-            die($e->getMessage());
+            $this->_dieWithNotifyResult($e->getCode(), $e->getMessage(), $backUrl);
         }
     }
 
@@ -485,19 +520,42 @@ class Pilipay extends PaymentModule
     }
 
     /**
+     * die with the code/msg/redirectUrl in pilipay callback request
+     * @param $code
+     * @param $msg
+     * @param $redirectUrl
+     */
+    protected function _dieWithNotifyResult($code, $msg, $redirectUrl){
+        echo "<result>{$code}</result><msg>{$msg}</msg><redirecturl>{$redirectUrl}</redirecturl>";
+        die;
+    }
+
+    protected function _getHttpHost(){
+        return Tools::getHttpHost(true);
+    }
+
+    /**
      * record a log message
      * @param string $level
      * @param string $msg
      */
     public static function log($level, $msg='')
     {
+        if ($level == 'debug' && !self::IS_IN_DEBUG_MODE){
+            return;
+        } else if (!$msg) {
+            list($level, $msg) = array('info', $level);
+        }
+
         $msg = date('Y-m-d H:i:s ') . $level . ' '. $msg . PHP_EOL;
         $msg .= sprintf(' -- %s %s with request: %s', $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'], json_encode($_REQUEST));
 
-        $e = new Exception();
-        $msg .= str_replace('/Users/clarence/work/pilibaba/plugins-for-pilipay/prestashop-dev/prestashop_1.6.1.2/', '', $e->getTraceAsString()) . PHP_EOL;
+        if (self::IS_IN_DEBUG_MODE){
+            $e = new Exception();
+            $msg .= PHP_EOL . str_replace(realpath(dirname(__FILE__).'/../../') . '/', '', $e->getTraceAsString());
+        }
 
-        file_put_contents('/var/log/prestashop/pilipay.log', $msg, FILE_APPEND);
+        @file_put_contents(self::LOG_PATH, $msg . PHP_EOL, FILE_APPEND);
     }
 }
 

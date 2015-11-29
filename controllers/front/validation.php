@@ -2,6 +2,7 @@
 /**
  * @since 1.5.0
  * @property Pilipay $module
+ * validation of the payment.
  */
 class PilipayValidationModuleFrontController extends ModuleFrontController
 {
