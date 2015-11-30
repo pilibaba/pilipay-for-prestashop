@@ -1,6 +1,4 @@
 <?php
-// todo: PHP 兼容性检查 -- 至少兼任5.2
-
 if (!defined('_PS_VERSION_'))
     exit;
 
@@ -183,7 +181,10 @@ class Pilipay extends PaymentModule
             return;
         }
 
-        $state = $params['objOrder']->getCurrentState();
+        /**@var $order Order */
+        $order = $params['objOrder'];
+
+        $state = $order->getCurrentState();
 
         // todo...
         if (in_array($state, array(Configuration::get('PS_OS_PAYMENT'), Configuration::get('PS_OS_BANKWIRE'), Configuration::get('PS_OS_OUTOFSTOCK'), Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')))) {
@@ -213,8 +214,6 @@ class Pilipay extends PaymentModule
         try {
             /**@var $order Order */
             $order = $params['order'];
-            /**@var $carrier Carrier */
-            $carrier = $params['carrier'];
 
             $pilipayOrder = new PilipayOrder();
             $pilipayOrder->merchantNO = Configuration::get(self::PILIPAY_MERCHANT_NO);
@@ -305,7 +304,6 @@ class Pilipay extends PaymentModule
         $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
         $helper->default_form_language = $lang->id;
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
-        $this->fields_form = array();
         $helper->id = (int)Tools::getValue('id_carrier');
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'btnSubmit';
@@ -412,6 +410,7 @@ class Pilipay extends PaymentModule
 
                 $productObj = new Product($product['product_id']);
                 $productUrl = $context->link->getProductLink($productObj);
+                $productPictureUrl = null;
                 if (!empty($product['image'])){
                     $img = $product['image'];
                     if ($img instanceof Image){
