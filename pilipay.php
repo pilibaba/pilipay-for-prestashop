@@ -1,7 +1,5 @@
 <?php
-
 // todo: PHP 兼容性检查 -- 至少兼任5.2
-// todo: 更新运单号
 
 if (!defined('_PS_VERSION_'))
     exit;
@@ -10,8 +8,8 @@ require_once(dirname(__FILE__).'/pilipay/autoload.php');
 
 class Pilipay extends PaymentModule
 {
-    const     IS_IN_DEBUG_MODE = true; // is to debug?
-    const     LOG_PATH = '/var/log/prestashop/pilipay.log';
+    const     IS_IN_DEBUG_MODE = false; // is to debug?
+    const     LOG_FILE_PATH = '/var/log/prestashop/pilipay.log';
 
     protected $_html = '';
     protected $_postErrors = array();
@@ -534,19 +532,27 @@ class Pilipay extends PaymentModule
         return Tools::getHttpHost(true);
     }
 
+    public static function log($level, $msg='')
+    {
+        if (!$msg) {
+            list($level, $msg) = array('debug', $level);
+        }
+
+        if ($level == 'debug' && !self::IS_IN_DEBUG_MODE) {
+            return;
+        }
+
+        PrestaShopLogger::addLog('pilipay:'. $level. ': '. $msg, 1, 0, 'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
+        self::logToFile($level, $msg);
+    }
+
     /**
      * record a log message
      * @param string $level
      * @param string $msg
      */
-    public static function log($level, $msg='')
+    public static function logToFile($level, $msg='')
     {
-        if ($level == 'debug' && !self::IS_IN_DEBUG_MODE){
-            return;
-        } else if (!$msg) {
-            list($level, $msg) = array('info', $level);
-        }
-
         $msg = date('Y-m-d H:i:s ') . $level . ' '. $msg . PHP_EOL;
         $msg .= sprintf(' -- %s %s with request: %s', $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'], json_encode($_REQUEST));
 
@@ -555,7 +561,7 @@ class Pilipay extends PaymentModule
             $msg .= PHP_EOL . str_replace(realpath(dirname(__FILE__).'/../../') . '/', '', $e->getTraceAsString());
         }
 
-        @file_put_contents(self::LOG_PATH, $msg . PHP_EOL, FILE_APPEND);
+        @file_put_contents(self::LOG_FILE_PATH, $msg . PHP_EOL, FILE_APPEND);
     }
 }
 
