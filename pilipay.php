@@ -502,9 +502,9 @@ class Pilipay extends PaymentModule
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
         if (Tools::isSubmit('btnSubmit')) {
-            if (!Tools::getValue(self::PILIPAY_MERCHANT_NO)){
+            if (!trim(Tools::getValue(self::PILIPAY_MERCHANT_NO))){
                 $this->_postErrors[] = $this->l('Merchant number is required.');
-            } else if (!Tools::getValue(self::PILIPAY_APP_SECRET)){
+            } else if (!trim(Tools::getValue(self::PILIPAY_APP_SECRET))){
                 $this->_postErrors[] = $this->l('Secret key is required.');
             }
         }
@@ -515,8 +515,8 @@ class Pilipay extends PaymentModule
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
         if (Tools::isSubmit('btnSubmit')) {
-            Configuration::updateValue(self::PILIPAY_MERCHANT_NO, Tools::getValue(self::PILIPAY_MERCHANT_NO));
-            Configuration::updateValue(self::PILIPAY_APP_SECRET, Tools::getValue(self::PILIPAY_APP_SECRET));
+            Configuration::updateValue(self::PILIPAY_MERCHANT_NO, trim(Tools::getValue(self::PILIPAY_MERCHANT_NO)));
+            Configuration::updateValue(self::PILIPAY_APP_SECRET, trim(Tools::getValue(self::PILIPAY_APP_SECRET)));
         }
         $this->_html .= $this->displayConfirmation($this->l('Settings updated'));
     }
