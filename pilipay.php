@@ -396,7 +396,7 @@ class Pilipay extends PaymentModule
             $pilipayOrder->pageUrl = self::_getHttpHost() . '/index.php?controller=history';
             $pilipayOrder->serverUrl = $paidCallbackUrl;
             $pilipayOrder->shipper = $order->total_shipping_tax_excl;
-            $pilipayOrder->tax = (Product::getTaxCalculationMethod() == PS_TAX_EXC ? $total - $cart->getOrderTotal(false) : 0);
+            $pilipayOrder->tax = $total - $cart->getOrderTotal(false);
 
             // create a good
             foreach ($order->getProducts() as $product) {
@@ -406,14 +406,6 @@ class Pilipay extends PaymentModule
                     6, null, false, true, $product['cart_quantity'], false,
                     (int)$order->id_customer, (int)$order->id_cart,
                     (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
-                // 税后价格:
-                $price_wt = Product::getPriceStatic((int)$product['id_product'], true,
-                    ($product['id_product_attribute'] ? (int)$product['id_product_attribute'] : null),
-                    2, null, false, true, $product['cart_quantity'], false,
-                    (int)$order->id_customer, (int)$order->id_cart,
-                    (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
-                // 判断下该使用哪个价格
-                $product_price = (Product::getTaxCalculationMethod() == PS_TAX_EXC ? Tools::ps_round($price, 2) : $price_wt);
 
                 $productObj = new Product($product['product_id']);
                 $productUrl = $context->link->getProductLink($productObj);
@@ -428,7 +420,7 @@ class Pilipay extends PaymentModule
                 $pilipayGood = new PilipayGood();
                 $pilipayGood->name = $product['product_name'] . (isset($product['attributes']) ? ' - ' . $product['attributes'] : '');
                 $pilipayGood->pictureUrl = $productPictureUrl;
-                $pilipayGood->price = $product_price;
+                $pilipayGood->price = $price;
                 $pilipayGood->productUrl = $productUrl;
                 $pilipayGood->productId = $product['product_id'];
                 $pilipayGood->quantity = $product['product_quantity'];
