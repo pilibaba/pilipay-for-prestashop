@@ -133,10 +133,17 @@ class Pilipay extends PaymentModule
     public function hookPayment($params)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
-        if (!$this->active)
+        if (!$this->active){
             return;
-        if (!$this->checkCurrency($params['cart']))
+        }
+
+        if (!$this->checkCurrency($params['cart'])){
             return;
+        }
+
+        if (!Configuration::get(self::PILIPAY_MERCHANT_NO) || !Configuration::get(self::PILIPAY_APP_SECRET)){
+            return;
+        }
 
         $this->smarty->assign(array(
             'this_path' => $this->_path,
