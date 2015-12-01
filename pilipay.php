@@ -440,7 +440,10 @@ class Pilipay extends PaymentModule
             echo $pilipayOrder->renderSubmitForm();
             die;
         } catch (PilipayError $e) {
-            self::log("Error:" . $e->getMessage());
+            self::log("error", $e->getMessage().PHP_EOL.$e->getTraceAsString());
+            die($e->getMessage());
+        } catch (Exception $e) {
+            self::log("error", $e->getMessage().PHP_EOL.$e->getTraceAsString());
             die($e->getMessage());
         }
     }
@@ -474,7 +477,7 @@ class Pilipay extends PaymentModule
 
             $backUrl .= '/index.php?controller=history'; // todo: any good back url?
             $this->_dieWithNotifyResult(1, 'Success', $backUrl);
-        } catch (PilipayError $e){
+        } catch (Exception $e){
             $this->_dieWithNotifyResult($e->getCode(), $e->getMessage(), $backUrl);
         }
     }
@@ -484,12 +487,7 @@ class Pilipay extends PaymentModule
      * @return string
      */
     public function _getAbbrOfCurrency($currency){
-        switch ($currency->iso_code){
-            case 'SGD': return 'USD';
-            // todo...
-            default:
-                throw new Exception("Unsupported currency type: {$currency->iso_code}! Please choose other payment methods.");
-        }
+        return strtoupper($currency->iso_code);
     }
 
     // 后台[设置]页面中: 验证输入内容
@@ -539,10 +537,11 @@ class Pilipay extends PaymentModule
 
         if ($level == 'debug' && !self::IS_IN_DEBUG_MODE) {
             return;
+        } else if ($level == 'debug' && self::IS_IN_DEBUG_MODE){
+            self::logToFile($level, $msg);
         }
 
         PrestaShopLogger::addLog('pilipay:'. $level. ': '. $msg, 1, 0, 'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
-        self::logToFile($level, $msg);
     }
 
     /**

@@ -5,3 +5,5 @@
 4. Agree the installation.
 5. Fill the `merchant number` and `app secret` in the settings.
 Well done. Pilipay is installed. You can place an order to have a test.
+
+# For more detail please visit [our API site](http://api.pilibaba.com/doc/install-pilipay-in-prestashop.html)
