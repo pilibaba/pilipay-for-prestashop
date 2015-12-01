@@ -221,11 +221,12 @@ class Pilipay extends PaymentModule
         try {
             /**@var $order Order */
             $order = $params['order'];
+            $trackingNumber = $order->shipping_number;
 
             $pilipayOrder = new PilipayOrder();
             $pilipayOrder->merchantNO = Configuration::get(self::PILIPAY_MERCHANT_NO);
             $pilipayOrder->orderNo = $order->id;
-            $pilipayOrder->updateTrackNo($order->getWsShippingNumber());
+            $pilipayOrder->updateTrackNo($trackingNumber);
         } catch (PilipayError $e){
             self::log('error', $e->getMessage());
         }
@@ -540,7 +541,19 @@ class Pilipay extends PaymentModule
             self::logToFile($level, $msg);
         }
 
-        PrestaShopLogger::addLog('pilipay:'. $level. ': '. $msg, 1, 0, 'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
+        try {
+            if (class_exists('PrestaShopLogger')) {
+                PrestaShopLogger::addLog('pilipay:' . $level . ': ' . $msg, 1, 0, 'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
+            } else if (class_exists('Logger')) {
+                // it's pretty strange that message cannot contain {}<> in earlier versions
+                $msg = strtr($msg, array('{' => '&#123;', '}' => '&#125;', '<' => '&lt;', '>' => '&gt;'));
+                Logger::addLog('pilipay:' . $level . ': ' . $msg, 1, 0, 'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
+            }
+        } catch (Exception $e){
+            if (self::IS_IN_DEBUG_MODE){
+                trigger_error(get_class($e) . ': '. $e->getMessage().PHP_EOL.$e->getTraceAsString(), E_USER_WARNING);
+            }
+        }
     }
 
     /**
