@@ -395,7 +395,7 @@ class Pilipay extends PaymentModule
             $pilipayOrder->sendTime = date('Y-m-d H:i:s');
             $pilipayOrder->pageUrl = self::_getHttpHost() . '/index.php?controller=history';
             $pilipayOrder->serverUrl = $paidCallbackUrl;
-            $pilipayOrder->shipper = $order->total_shipping;
+            $pilipayOrder->shipper = $order->total_shipping_tax_excl;
             $pilipayOrder->tax = (Product::getTaxCalculationMethod() == PS_TAX_EXC ? $total - $cart->getOrderTotal(false) : 0);
 
             // create a good
