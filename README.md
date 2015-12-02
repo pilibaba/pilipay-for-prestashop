@@ -7,4 +7,4 @@
 Well done. Pilipay is installed. You can place an order to have a test.
 
 # For more detail please visit [our API site](http://api.pilibaba.com/doc/install-pilipay-in-prestashop.html)
-Note: version 1.1
+Note: version 1.1.2
