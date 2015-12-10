@@ -1,0 +1,3 @@
+[submodule "pilipay"]
+	path = pilipay
+	url = git@github.com:pilibaba/pilipay.git
