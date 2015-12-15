@@ -31,10 +31,13 @@ class Pilipay extends PaymentModule
         $this->name = 'pilipay';
 
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.6';
+        $this->version = '1.1.7';
         $this->author = 'Pilibaba';
         $this->controllers = array('payment', 'validation');
         $this->is_eu_compatible = 0; // = 1; todo: what should I do to be compatible with EU?
+
+		$this->ps_versions_compliancy = array('min' => '1.5', 'max' => '1.6');
+		$this->module_key = 'd2160b17b4b2d347b0ebe620c783f7e3';
 
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
