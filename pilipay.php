@@ -443,17 +443,25 @@ HTML;
             $pilipayOrder->sendTime = date('Y-m-d H:i:s');
             $pilipayOrder->pageUrl = self::_getHttpHost() . '/index.php?controller=history';
             $pilipayOrder->serverUrl = $paidCallbackUrl;
-            $pilipayOrder->shipper = $order->total_shipping_tax_excl;
-            $pilipayOrder->tax = $total - $cart->getOrderTotal(false);
+            $pilipayOrder->shipper = $order->total_shipping_tax_incl;
 
+            $totalProductVatTax = 0;
             // create a good
             foreach ($order->getProducts() as $product) {
                 // 税前价格:
-                $price = Product::getPriceStatic((int)$product['id_product'], false,
-                    ($product['id_product_attribute'] ? (int)$product['id_product_attribute'] : null),
-                    6, null, false, true, $product['cart_quantity'], false,
-                    (int)$order->id_customer, (int)$order->id_cart,
-                    (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
+//                $price = Product::getPriceStatic((int)$product['id_product'], false,
+//                    ($product['id_product_attribute'] ? (int)$product['id_product_attribute'] : null),
+//                    2, null, false, true, $product['cart_quantity'], false,
+//                    (int)$order->id_customer, (int)$order->id_cart,
+//                    (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
+//                $price_wt = Product::getPriceStatic((int)$product['id_product'], true,
+//                   ($product['id_product_attribute'] ? (int)$product['id_product_attribute'] : null),
+//                    2, null, false, true, $product['cart_quantity'], false,
+//                   (int)$order->id_customer, (int)$order->id_cart,
+//                   (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
+                $price = $product['unit_price_tax_excl'];
+                $price_wt = $product['unit_price_tax_incl'];
+                $totalProductVatTax += $price_wt - $price;
 
                 $productObj = new Product($product['product_id']);
                 $productUrl = $context->link->getProductLink($productObj);
@@ -468,20 +476,23 @@ HTML;
                 $pilipayGood = new PilipayGood();
                 $pilipayGood->name = $product['product_name'] . (isset($product['attributes']) ? ' - ' . $product['attributes'] : '');
                 $pilipayGood->pictureUrl = $productPictureUrl;
-                $pilipayGood->price = $price;
+                $pilipayGood->price = $price_wt;
                 $pilipayGood->productUrl = $productUrl;
                 $pilipayGood->productId = $product['product_id'];
                 $pilipayGood->quantity = $product['product_quantity'];
-                $pilipayGood->weight = $product['product_weight']; // todo ...
-                $pilipayGood->weightUnit = 'kg'; // default kg for presta shop. todo: is there any other unit?
+                $pilipayGood->weight = $product['product_weight'];
+                $pilipayGood->weightUnit = 'kg'; // default kg for presta shop.
                 $pilipayGood->width = $product['product_width'] * 10; // 10: cm -> mm
                 $pilipayGood->height = $product['product_height'] * 10;// 10: cm -> mm
                 $pilipayGood->length = $product['product_length'] * 10;// 10: cm -> mm
 
                 // add the good to order
                 $pilipayOrder->addGood($pilipayGood);
-
             }
+
+            $pilipayOrder->tax = min(0, $cart->getOrderTotal(true) - $cart->getOrderTotal(false)
+                                            - ($order->total_shipping_tax_incl - $order->total_shipping_tax_excl)
+                                            - $totalProductVatTax);
 
             // render submit form
             echo $pilipayOrder->renderSubmitForm();
