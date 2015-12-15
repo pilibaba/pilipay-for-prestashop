@@ -248,19 +248,34 @@ class Pilipay extends PaymentModule
         $barcodePicUrl = $pilipayOrder->getBarcodePicUrl();
         $barcodeFileName = "barcode-for-order-{$orderId}.jpg";
 
-        $html = <<<HTML
-<div class="row">
-    <div class="col-lg-12">
-        <div class="panel">
-        <div class="panel-heading">Shipping Notice Of Pilibaba Payment</div>
+        $contentHtml = <<<HTML
             <p>Please <a href="{$barcodePicUrl}" download="{$barcodeFileName}">download</a> and print the following barcode. Then paste it at a conspicuous area of the package, before shipping the package to one of <a href="http://en.pilibaba.com/addressList" target="_blank">Pilibaba's warehouses</a>.  </p>
             <p>
                 <a href="{$barcodePicUrl}" download="{$barcodeFileName}"><img src="{$barcodePicUrl}" alt="{$barcodeFileName}" title="{$barcodeFileName}" /></a>
             </p>
+HTML;
+        if (defined('_PS_VERSION_') and version_compare(_PS_VERSION_, '1.6') > 0){
+            $html = <<<HTML
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel">
+        <div class="panel-heading">Shipping Notice Of Pilibaba Payment</div>
+        $contentHtml
         </div>
     </div>
 </div>
 HTML;
+        } else {
+            $html = <<<HTML
+<br/>
+<fieldset>
+    <legend>Shipping Notice Of Pilibaba Payment</legend>
+    $contentHtml
+</fieldset>
+HTML;
+        }
+
+
         return $html;
     }
 
