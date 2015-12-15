@@ -80,6 +80,7 @@ class Pilipay extends PaymentModule
 //            || !$this->registerHook('displayPaymentEU') // todo: EU compatible?
             || !$this->registerHook('actionAdminOrdersTrackingNumberUpdate')
             || !$this->registerHook('paymentReturn')
+            || ! $this->registerHook('displayAdminOrder')
             || !$this->_createOrderStates()){
             return false;
         }
@@ -230,6 +231,37 @@ class Pilipay extends PaymentModule
         } catch (PilipayError $e){
             self::log('error', $e->getMessage());
         }
+    }
+
+    public function hookDisplayAdminOrder($order){
+        self::log(sprintf("Calling %s with %s", __METHOD__, get_class(reset($order))));
+        $orderId = $order['id_order'];
+
+        $order = new Order($orderId);
+        if (strcasecmp($order->payment, $this->name) !== 0){
+            return null;
+        }
+
+        $pilipayOrder = new PilipayOrder();
+        $pilipayOrder->merchantNO = Configuration::get(self::PILIPAY_MERCHANT_NO);
+        $pilipayOrder->orderNo = $orderId;
+        $barcodePicUrl = $pilipayOrder->getBarcodePicUrl();
+        $barcodeFileName = "barcode-for-order-{$orderId}.jpg";
+
+        $html = <<<HTML
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel">
+        <div class="panel-heading">Shipping Notice Of Pilibaba Payment</div>
+            <p>Please <a href="{$barcodePicUrl}" download="{$barcodeFileName}">download</a> and print the following barcode. Then paste it at a conspicuous area of the package, before shipping the package to one of <a href="http://en.pilibaba.com/addressList" target="_blank">Pilibaba's warehouses</a>.  </p>
+            <p>
+                <a href="{$barcodePicUrl}" download="{$barcodeFileName}"><img src="{$barcodePicUrl}" alt="{$barcodeFileName}" title="{$barcodeFileName}" /></a>
+            </p>
+        </div>
+    </div>
+</div>
+HTML;
+        return $html;
     }
 
     // create order status
@@ -456,7 +488,7 @@ class Pilipay extends PaymentModule
 
         try {
             $payResult = PilipayPayResult::fromRequest();
-            if (!$payResult->verify(Configuration::get(self::PILIPAY_APP_SECRET)) && !self::IS_IN_DEBUG_MODE){
+            if (!$payResult->verify(Configuration::get(self::PILIPAY_APP_SECRET))){
                 $this->_dieWithNotifyResult(400, 'Invalid request', $backUrl);
             }
 
