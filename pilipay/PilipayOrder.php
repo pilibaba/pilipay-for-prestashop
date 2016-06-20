@@ -1,5 +1,30 @@
 <?php
 /**
+* 2007-2016 PrestaShop
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Academic Free License (AFL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/afl-3.0.php
+* If you did not receive a copy of the license and are unable to
+* obtain it through the world-wide-web, please send an email
+* to license@prestashop.com so we can send you a copy immediately.
+*
+* DISCLAIMER
+*
+* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+* versions in the future. If you wish to customize PrestaShop for your
+* needs please refer to http://www.prestashop.com for more information.
+*
+*  @author    PrestaShop SA <contact@prestashop.com>
+*  @copyright 2007-2016 PrestaShop SA
+*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+*  International Registered Trademark & Property of PrestaShop SA
+*/
+
+/**
  * Class PilipayOrder
  *
  * required:
@@ -25,19 +50,20 @@
 class PilipayOrder extends PilipayModel
 {
     // 提交订单的接口地址
-    const SUBMIT_TARGET_URL = 'https://www.pilibaba.com/pilipay/payreq';
+    const SUBMIT_TARGET_URL = 'http://www.pilibaba.com/pilipay/payreq';
 
     // 更新运单号的接口地址
-    const UPDATE_TRACK_URL = 'https://www.pilibaba.com/pilipay/updateTrackNo';
+    const UPDATE_TRACK_URL = 'http://www.pilibaba.com/pilipay/updateTrackNo';
 
     // The interface URL for barcode
     // 二维码的接口地址
-    const BARCODE_URL = 'https://www.pilibaba.com/pilipay/barCode';
+    const BARCODE_URL = 'http://www.pilibaba.com/pilipay/barCode';
 
 
     private $_goodsList = array();
 
-    public function __construct($properties=array()){
+    public function __construct($properties = array())
+    {
         $this->version = '1.0.1';
         $this->signType = 'MD5';
 
@@ -48,39 +74,40 @@ class PilipayOrder extends PilipayModel
      * @return array order data in API form
      * @throws PilipayError
      */
-    public function toApiArray(){
+    public function toApiArray()
+    {
         // sign
-        if ($this->signType == 'MD5'){
+        if ($this->signType == 'MD5') {
             // sign using MD5
             // not: orderAmount should be in cents
-            $this->signMsg = md5($this->merchantNO .$this->orderNo . intval($this->orderAmount * 100) .$this->sendTime .$this->appSecret);
+            $this->signMsg = md5($this->merchantNO . $this->orderNo . (int)round($this->orderAmount * 100) . $this->sendTime . $this->appSecret);
         } else {
             throw new PilipayError(PilipayError::INVALID_ARGUMENT, array('name' => 'signType', 'value' => $this->signType));
         }
 
         // check goods list
-        if (empty($this->_goodsList)){
-            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array('name' => 'goodsList', 'value' => json_encode($this->_goodsList)));
+        if (empty($this->_goodsList)) {
+            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array('name' => 'goodsList', 'value' => Tools::jsonEncode($this->_goodsList)));
         }
 
         // verify
         parent::verifyFields();
 
         return array_map('strval', array(
-            'version' => $this->version,
-            'merchantNO' => $this->merchantNO,
+            'version'      => $this->version,
+            'merchantNO'   => $this->merchantNO,
             'currencyType' => $this->currencyType,
-            'orderNo' => $this->orderNo,
-            'orderAmount' => intval($this->orderAmount * 100), // API: need to be in cent
-            'orderTime' => $this->orderTime,
-            'sendTime' => $this->sendTime,
-            'pageUrl' => $this->pageUrl,
-            'serverUrl' => $this->serverUrl,
-            'shipper' => intval($this->shipper * 100), // API: need to be in cent
-            'tax' => intval($this->tax * 100), // API: need to be in cent
-            'signType' => $this->signType,
-            'signMsg' => $this->signMsg,
-            'goodsList' => urlencode(json_encode($this->_goodsList))
+            'orderNo'      => $this->orderNo,
+            'orderAmount'  => (int)round($this->orderAmount * 100), // API: need to be in cent
+            'orderTime'    => $this->orderTime,
+            'sendTime'     => $this->sendTime,
+            'pageUrl'      => $this->pageUrl,
+            'serverUrl'    => $this->serverUrl,
+            'shipper'      => (int)round($this->shipper * 100), // API: need to be in cent
+            'tax'          => (int)round($this->tax * 100), // API: need to be in cent
+            'signType'     => $this->signType,
+            'signMsg'      => $this->signMsg,
+            'goodsList'    => urlencode(Tools::jsonEncode($this->_goodsList))
         ));
     }
 
@@ -89,10 +116,11 @@ class PilipayOrder extends PilipayModel
      * @return array
      * @throws PilipayError
      */
-    public function submit(){
+    public function submit()
+    {
         $orderData = $this->toApiArray();
 
-        PilipayLogger::instance()->log('info', 'Submit order begin: '.json_encode($orderData));
+        PilipayLogger::instance()->log('info', 'Submit order begin: '.Tools::jsonEncode($orderData));
 
         // submit
         $curl = new PilipayCurl();
@@ -122,28 +150,24 @@ class PilipayOrder extends PilipayModel
      * @param string $method
      * @return string
      */
-    public function renderSubmitForm($method="POST"){
+    public function renderSubmitForm($method = "POST")
+    {
+        $this->context = Context::getContext();
         $action = self::SUBMIT_TARGET_URL;
 
         $orderData = $this->toApiArray();
 
-        PilipayLogger::instance()->log('info', "Submit order (using {$method} form): ".json_encode($orderData));
+        PilipayLogger::instance()->log('info', "Submit order (using {$method} form): ".Tools::jsonEncode($orderData));
 
         $fields = '';
         foreach ($orderData as $name => $value) {
-            $fields .= sprintf('<input type="hidden" name="%s" value="%s" />', $name, htmlspecialchars($value));
+            $input = $this->context->smarty->fetch(realpath(dirname(__FILE__) . '/..') . '/views/templates/admin/input.tpl');
+            $fields .= sprintf($input, $name, htmlspecialchars($value));
         }
-
-        $html = <<<HTML_CODE
-<form id="pilipaysubmit" name="pilipaysubmit" action="{$action}" method="{$method}" >
-    {$fields}
-    <input type="submit" value="submit" style="display: none;" />
-</form>
-<script type="text/javascript">
-    document.forms['pilipaysubmit'].submit();
-</script>
-HTML_CODE;
-
+        $this->context->smarty->assign('action', $action);
+        $this->context->smarty->assign('method', $method);
+        $this->context->smarty->assign('fields', $fields);
+        $html = $this->context->smarty->fetch(realpath(dirname(__FILE__) . '/..') . '/views/templates/admin/submit.tpl');
         return $html;
     }
 
@@ -151,14 +175,15 @@ HTML_CODE;
      * Update track number (logistics number)
      * @param $logisticsNo
      */
-    public function updateTrackNo($logisticsNo){
+    public function updateTrackNo($logisticsNo)
+    {
         $params = array(
-            'orderNo' => $this->orderNo,
-            'merchantNo' => $this->merchantNO,
-            'logisticsNo' => $logisticsNo,
+            'orderNo' => pSQL($this->orderNo),
+            'merchantNo' => pSQL($this->merchantNO),
+            'logisticsNo' => pSQL($logisticsNo),
         );
 
-        PilipayLogger::instance()->log('info', "Update track NO: ".json_encode($params));
+        PilipayLogger::instance()->log('info', "Update track NO: ".Tools::jsonEncode($params));
 
         $curl = new PilipayCurl();
         $curl->get(self::UPDATE_TRACK_URL, $params);
@@ -178,7 +203,8 @@ HTML_CODE;
      * Add goods info
      * @param PilipayGood $good 商品信息
      */
-    public function addGood(PilipayGood $good){
+    public function addGood(PilipayGood $good)
+    {
         $this->_goodsList[] = $good->toApiArray();
     }
 
@@ -189,20 +215,22 @@ HTML_CODE;
      * -- 在邮寄前, 这个条形码应该打印到包裹的包装上, 以便我们的中转仓库识别包裹.
      * @return string the barcode's Picture URL
      */
-    public function getBarcodePicUrl(){
+    public function getBarcodePicUrl()
+    {
         return self::BARCODE_URL . '?' . http_build_query(array(
-            'merchantNo' => $this->merchantNO,
-            'orderNo' => $this->orderNo,
+            'merchantNo' => pSQL($this->merchantNO),
+            'orderNo' => pSQL($this->orderNo),
         ));
     }
 
-    public function getNumericFieldNames(){
+    public function getNumericFieldNames()
+    {
         return array('orderAmount', 'shipper', 'tax');
     }
 
-    public function getRequiredFieldNames(){
+    public function getRequiredFieldNames()
+    {
         return array('version', 'merchantNO', 'appSecret', 'currencyType', 'orderNo', 'orderAmount',
                      'orderTime', 'sendTime', 'pageUrl', 'serverUrl', 'shipper', 'tax', 'signType', 'signMsg');
     }
-
 }

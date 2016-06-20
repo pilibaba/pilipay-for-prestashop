@@ -1,5 +1,30 @@
 <?php
 /**
+* 2007-2016 PrestaShop
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Academic Free License (AFL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/afl-3.0.php
+* If you did not receive a copy of the license and are unable to
+* obtain it through the world-wide-web, please send an email
+* to license@prestashop.com so we can send you a copy immediately.
+*
+* DISCLAIMER
+*
+* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+* versions in the future. If you wish to customize PrestaShop for your
+* needs please refer to http://www.prestashop.com for more information.
+*
+*  @author    PrestaShop SA <contact@prestashop.com>
+*  @copyright 2007-2016 PrestaShop SA
+*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+*  International Registered Trademark & Property of PrestaShop SA
+*/
+
+/**
  * Class PilipayPayResult
  * This class helps to deal the callback payment result.
  * Note: directly `new` operation is not supported. You should always use `PilipayPayResult::fromRequest()` to create an instance.
@@ -75,10 +100,10 @@ class PilipayPayResult
      */
     public function verify($appSecret, $throws = false)
     {
-        $calcedSignMsg = md5($this->_merchantNO . $this->_orderNo . intval($this->_orderAmount) . $this->_sendTime . $appSecret);
+        $calcedSignMsg = md5($this->_merchantNO . $this->_orderNo . (int)round($this->_orderAmount) . $this->_sendTime . $appSecret);
 
-        if ($calcedSignMsg != $this->_signMsg){
-            PilipayLogger::instance()->log("error", "Invalid signMsg: " . $this->_signMsg . " with secret: " . $appSecret . " with data: " . json_encode(get_object_vars($this)));
+        if ($calcedSignMsg != $this->_signMsg) {
+            PilipayLogger::instance()->log("error", "Invalid signMsg: " . $this->_signMsg . " with secret: " . $appSecret . " with data: " . Tools::jsonEncode(get_object_vars($this)));
 
             if ($throws) {
                 throw new PilipayError(PilipayError::INVALID_SIGN, $this->_signMsg);
@@ -122,10 +147,11 @@ class PilipayPayResult
      * @param $andDie bool
      * @return null
      */
-    public function returnDealResultToPilibaba($result, $message, $redirectUrl, $andDie=true){
+    public function returnDealResultToPilibaba($result, $message, $redirectUrl, $andDie = true)
+    {
         echo "<result>$result</result><redirecturl>$redirectUrl</redirecturl><message>$message</message>";
 
-        if ($andDie){
+        if ($andDie) {
             die;
         }
 

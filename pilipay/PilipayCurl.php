@@ -1,4 +1,28 @@
 <?php
+/**
+* 2007-2016 PrestaShop
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Academic Free License (AFL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/afl-3.0.php
+* If you did not receive a copy of the license and are unable to
+* obtain it through the world-wide-web, please send an email
+* to license@prestashop.com so we can send you a copy immediately.
+*
+* DISCLAIMER
+*
+* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+* versions in the future. If you wish to customize PrestaShop for your
+* needs please refer to http://www.prestashop.com for more information.
+*
+*  @author    PrestaShop SA <contact@prestashop.com>
+*  @copyright 2007-2016 PrestaShop SA
+*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+*  International Registered Trademark & Property of PrestaShop SA
+*/
 
 /**
  * Class PilipayCurl
@@ -14,7 +38,8 @@ class PilipayCurl
     /**
      * Nothing to do, just creat the object
      */
-    public function __construct(){
+    public function __construct()
+    {
     }
 
     /**
@@ -22,7 +47,8 @@ class PilipayCurl
      * Normally it's not necessary
      * @param array $headers  in format: header key =>  header value
      */
-    public function setAdditionalHeaders($headers){
+    public function setAdditionalHeaders($headers)
+    {
         $this->additionalHeaders = $headers;
     }
 
@@ -33,7 +59,8 @@ class PilipayCurl
      * @param int $timeout              - request timeout in seconds
      * @return string                   - the response content (without headers)
      */
-    public function post($url, $params, $timeout=30){
+    public function post($url, $params, $timeout = 30)
+    {
         return $this->request('POST', $url, $params, $timeout);
     }
 
@@ -44,7 +71,8 @@ class PilipayCurl
      * @param int $timeout              - request timeout in seconds
      * @return string                   - the response content (without headers)
      */
-    public function get($url, $params, $timeout=30){
+    public function get($url, $params, $timeout = 30)
+    {
         return $this->request('GET', $url, $params, $timeout);
     }
 
@@ -56,7 +84,8 @@ class PilipayCurl
      * @param int $timeout              - request timeout in seconds
      * @return string                   - the response content (without headers)
      */
-    public function request($method, $url, $params, $timeout=30){
+    public function request($method, $url, $params, $timeout = 30)
+    {
         $options = array(
             CURLOPT_HTTPGET => false,
             CURLOPT_HEADER => true,
@@ -70,10 +99,10 @@ class PilipayCurl
             CURLOPT_TIMEOUT => $timeout
         );
 
-        switch (strtoupper($method)){
+        switch (Tools::strtoupper($method)) {
             case 'GET':
-                if (!empty($params)){
-                    $url .= '?' . (is_array($params) ? http_build_query($params) : strval($params));
+                if (!empty($params)) {
+                    $url .= '?' . (is_array($params) ? http_build_query($params) : (string)$params);
                 }
                 $ch = curl_init($url);
                 $options[CURLOPT_HTTPGET] = true;
@@ -81,16 +110,16 @@ class PilipayCurl
             default: // post...
                 $ch = curl_init($url);
                 $options[CURLOPT_CUSTOMREQUEST] = $method;
-                if (!empty($params)){
-                    $options[CURLOPT_POSTFIELDS] = (is_array($params) ? http_build_query($params) : strval($params));
+                if (!empty($params)) {
+                    $options[CURLOPT_POSTFIELDS] = (is_array($params) ? http_build_query($params) : (string)$params);
                     $this->additionalHeaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf-8';
                 }
                 break;
         }
 
         $headers = array();
-        if (!empty($this->additionalHeaders)){
-            foreach ($this->additionalHeaders as $key => $value){
+        if (!empty($this->additionalHeaders)) {
+            foreach ($this->additionalHeaders as $key => $value) {
                 $headers[] = $key . ': ' . $value;
             }
 
@@ -120,11 +149,10 @@ class PilipayCurl
                     'content' => $response,
                 )
             ), true));
-
         $headerSize = $curlInfo['header_size'];
-        $this->responseHeaders = self::parseResponseHeader(substr($response, 0, $headerSize));
+        $this->responseHeaders = self::parseResponseHeader(Tools::substr($response, 0, $headerSize));
         $this->responseHeaders['redirect_url'] = $curlInfo['redirect_url'];
-        $this->responseContent = substr($response, $headerSize);
+        $this->responseContent = Tools::substr($response, $headerSize);
         return $this->responseContent;
     }
 
@@ -133,11 +161,12 @@ class PilipayCurl
      * @param string $headerText
      * @return array
      */
-    public static function parseResponseHeader($headerText){
+    public static function parseResponseHeader($headerText)
+    {
         $headers = array();
 
         foreach (explode("\n", $headerText) as $header) {
-            if (preg_match('/^HTTP\/(?<version>\d+\.\d+)\s+(?<statusCode>\d+)\s+(?<statusText>.*)$/', $header, $matches)){
+            if (preg_match('/^HTTP\/(?<version>\d+\.\d+)\s+(?<statusCode>\d+)\s+(?<statusText>.*)$/', $header, $matches)) {
                 $headers['version'] = $matches['version'];
                 $headers['statusCode'] = $matches['statusCode'];
                 $headers['statusText'] = $matches['statusText'];
@@ -145,9 +174,9 @@ class PilipayCurl
             }
 
             $delimeterPos = strpos($header, ':');
-            if ($delimeterPos !== false){
-                $key = trim(substr($header, 0, $delimeterPos));
-                $headers[$key] = trim(substr($header, $delimeterPos + 1));
+            if ($delimeterPos !== false) {
+                $key = trim(Tools::substr($header, 0, $delimeterPos));
+                $headers[$key] = trim(Tools::substr($header, $delimeterPos + 1));
             } else {
                 // ignore unknown headers...
             }
@@ -159,23 +188,26 @@ class PilipayCurl
     /**
      * @return string the response's status code, i.e: 200, 301, 400, 500...
      */
-    public function getResponseStatusCode(){
+    public function getResponseStatusCode()
+    {
         return $this->getResponseHeader('statusCode');
     }
 
     /**
      * @return string the response's status text, i.e: OK, Found...
      */
-    public function getResponseStatusText(){
+    public function getResponseStatusText()
+    {
         return $this->getResponseHeader('statusText');
     }
 
     /**
      * @return string the URL for redirecting, normally when the status code is 30x
      */
-    public function getResponseRedirectUrl(){
+    public function getResponseRedirectUrl()
+    {
         $url = $this->getResponseHeader('redirect_url');
-        if ($url){
+        if ($url) {
             return $url;
         } else {
             return $this->getResponseHeader('Location');
@@ -186,24 +218,27 @@ class PilipayCurl
      * @param string $key  - the header key
      * @return string|null - the header value
      */
-    public function getResponseHeader($key){
+    public function getResponseHeader($key)
+    {
         return $this->responseHeaders[$key];
     }
 
     /**
      * @return string|null - the response content (without headers)
      */
-    public function getResponseContent(){
+    public function getResponseContent()
+    {
         return $this->responseContent;
     }
 
     /**
      * @return PilipayCurl
      */
-    public static function instance(){
+    public static function instance()
+    {
         static $instance = null;
 
-        if (!$instance){
+        if (!$instance) {
             $instance = new PilipayCurl();
         }
 
