@@ -655,8 +655,8 @@ class Pilipay extends PaymentModule
         $id_address = $this->newAddress($order);
         $sql = 'UPDATE `'._DB_PREFIX_.'orders` 
             SET `id_address_delivery` ='.(int)$id_address.',
-            `id_address_invoice` = '.(string)$id_address.'
-            WHERE id_order='.(string)$this->currentOrder;
+            `id_address_invoice` = '.(int)$id_address.'
+            WHERE id_order='.(int)$this->currentOrder;
 
         Db::getInstance()->execute($sql);
 
