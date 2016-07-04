@@ -71,8 +71,8 @@ class pilipay extends PaymentModule
         $this->is_eu_compatible = 0; // = 1; todo: what should I do to be compatible with EU?
 
         $this->ps_versions_compliancy = array(
-          'min' => '1.5.1',
-          'max' => '1.6.1.5',
+            'min' => '1.5.1',
+            'max' => '1.6.1.5',
         );
         $this->module_key             = '1d52b16e6ed130c60b22ac7896f69bd2';
 
@@ -80,12 +80,12 @@ class pilipay extends PaymentModule
         $this->currencies_mode = 'checkbox';
 
         $config = Configuration::getMultiple(
-          array(
-            self::PILIPAY_MERCHANT_NO,
-            self::PILIPAY_APP_SECRET,
-            self::PILIPAY_WAREHOUSES,
-            self::PILIPAY_TESTMODE,
-          )
+            array(
+                self::PILIPAY_MERCHANT_NO,
+                self::PILIPAY_APP_SECRET,
+                self::PILIPAY_WAREHOUSES,
+                self::PILIPAY_TESTMODE,
+            )
         );
         if (!empty($config[self::PILIPAY_MERCHANT_NO])) {
             $this->merchantNo = $config[self::PILIPAY_MERCHANT_NO];
@@ -129,11 +129,11 @@ class pilipay extends PaymentModule
     public function install()
     {
         self::log(
-          sprintf(
-            "Calling %s with %s",
-            __METHOD__,
-            Tools::jsonEncode(func_get_args())
-          )
+            sprintf(
+                "Calling %s with %s",
+                __METHOD__,
+                Tools::jsonEncode(func_get_args())
+            )
         );
         if (!parent::install()
             || !$this->registerHook('header') // -> hookPayment()
@@ -158,7 +158,7 @@ class pilipay extends PaymentModule
     public function uninstall()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
         if (!Configuration::deleteByName(self::PILIPAY_MERCHANT_NO)
             || !Configuration::deleteByName(self::PILIPAY_APP_SECRET)
             || !Configuration::deleteByName(self::PILIPAY_CURRENCY)
@@ -201,14 +201,14 @@ class pilipay extends PaymentModule
 
         $this->context->smarty->assign('module_dir', $this->_path);
         $this->context->smarty->assign('registerurl',
-          $this->context->link->getModuleLink('pilipay', 'autoregister',
-            array(), true));
+            $this->context->link->getModuleLink('pilipay', 'autoregister',
+                array(), true));
 
         $this->context->smarty->assign('pili_currency',
-          PilipayCurrency::arrayFormat());
+            PilipayCurrency::arrayFormat());
 
         $this->context->smarty->assign('pili_address',
-          PilipayWarehouseAddress::addressFormat());
+            PilipayWarehouseAddress::addressFormat());
 
         $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/backend.tpl');
 
@@ -225,7 +225,7 @@ class pilipay extends PaymentModule
         }
 
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
         if (Tools::isSubmit('btnSubmit')) { // POST request
             $this->_verifyConfigFromPost();
             if (!count($this->_postErrors)) {
@@ -249,7 +249,7 @@ class pilipay extends PaymentModule
     public function postProcessMode()
     {
         Configuration::updateValue(self::PILIPAY_TESTMODE,
-          Tools::getValue('pili_mode'));
+            Tools::getValue('pili_mode'));
 
         $this->_html .= $this->displayConfirmation($this->l('Pilipay Mode changed!'));
     }
@@ -271,20 +271,20 @@ class pilipay extends PaymentModule
         $password  = trim(Tools::getValue('pili_password'));
         $password  = pSQL($password);
         $data      = array(
-          'platformNo' => $platformNo,
-          'appSecret'  => Tools::strtoupper(md5(
-            $logistics
-            .$platformNo
-            .$secure_key
-            .$currency
-            .$email
-            .md5($password)
-          )),
+            'platformNo' => $platformNo,
+            'appSecret'  => Tools::strtoupper(md5(
+                $logistics
+                .$platformNo
+                .$secure_key
+                .$currency
+                .$email
+                .md5($password)
+            )),
 
-          'email'     => $email,
-          'password'  => md5($password),
-          'currency'  => $currency,
-          'logistics' => $logistics,
+            'email'     => $email,
+            'password'  => md5($password),
+            'currency'  => $currency,
+            'logistics' => $logistics,
         );
 
         $response = PilipayAutoregister::register($data);
@@ -305,12 +305,12 @@ class pilipay extends PaymentModule
             if (Tools::isSubmit('submitRegister')) {
                 //if( !$PILIPAY_MERCHANT_NO)
                 Configuration::updateValue(self::PILIPAY_MERCHANT_NO,
-                  $array['data']['merchantNo']);
+                    $array['data']['merchantNo']);
                 //if( !$PILIPAY_APP_SECRET)
                 Configuration::updateValue(self::PILIPAY_APP_SECRET,
-                  $array['data']['privateKey']);
+                    $array['data']['privateKey']);
                 Configuration::updateValue(self::PILIPAY_WAREHOUSES,
-                  Tools::getValue('pili_warehouse_id'));
+                    Tools::getValue('pili_warehouse_id'));
             }
             $this->_html .= $this->displayConfirmation($this->l('Pilibaba merchant account auto registered!'));
         } else {
@@ -339,7 +339,7 @@ class pilipay extends PaymentModule
     public function hookPayment($params)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
         if (!$this->active) {
             return;
         }
@@ -353,10 +353,10 @@ class pilipay extends PaymentModule
         }
 
         $this->smarty->assign(array(
-          'this_path'     => $this->_path,
-          'this_path_bw'  => $this->_path,
-          'this_path_ssl' => Tools::getShopDomainSsl(true,
-              true).__PS_BASE_URI__.'modules/'.$this->name.'/',
+            'this_path'     => $this->_path,
+            'this_path_bw'  => $this->_path,
+            'this_path_ssl' => Tools::getShopDomainSsl(true,
+                    true).__PS_BASE_URI__.'modules/'.$this->name.'/',
         ));
 
         // when click: POST to pilipay/controllers/front/validation
@@ -391,7 +391,7 @@ class pilipay extends PaymentModule
     public function hookPaymentReturn($params)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
 
         if (!$this->active) {
             return;
@@ -404,21 +404,21 @@ class pilipay extends PaymentModule
 
         // todo...
         if (in_array($state, array(
-          Configuration::get('PS_OS_PAYMENT'),
-          Configuration::get('PS_OS_BANKWIRE'),
-          Configuration::get('PS_OS_OUTOFSTOCK'),
-          Configuration::get('PS_OS_OUTOFSTOCK_UNPAID'),
+            Configuration::get('PS_OS_PAYMENT'),
+            Configuration::get('PS_OS_BANKWIRE'),
+            Configuration::get('PS_OS_OUTOFSTOCK'),
+            Configuration::get('PS_OS_OUTOFSTOCK_UNPAID'),
         ))) {
             $this->smarty->assign(array(
-              'total_to_pay' => Tools::displayPrice($params['total_to_pay'],
-                $params['currencyObj'], false),
-              'status'       => 'ok',
-              'id_order'     => $params['objOrder']->id,
+                'total_to_pay' => Tools::displayPrice($params['total_to_pay'],
+                    $params['currencyObj'], false),
+                'status'       => 'ok',
+                'id_order'     => $params['objOrder']->id,
             ));
 
             if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)) {
                 $this->smarty->assign('reference',
-                  $params['objOrder']->reference);
+                    $params['objOrder']->reference);
             }
         } else {
             $this->smarty->assign('status', 'failed');
@@ -435,7 +435,7 @@ class pilipay extends PaymentModule
     public function hookActionAdminOrdersTrackingNumberUpdate($params)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
 
         try {
             /**@var $order Order */
@@ -449,7 +449,7 @@ class pilipay extends PaymentModule
                 PilipayConfig::setUseProductionEnv(false);
                 $pilipayOrder             = new PilipayOrder();
                 $pilipayOrder->merchantNO = pSQL(
-                  '0210000202'
+                    '0210000202'
                 );  // a number for a merchant from pilibaba
             }
 
@@ -463,7 +463,7 @@ class pilipay extends PaymentModule
     public function hookDisplayAdminOrder($order)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          get_class(reset($order))));
+            get_class(reset($order))));
         $orderId = $order['id_order'];
 
         $order = new Order($orderId);
@@ -478,7 +478,7 @@ class pilipay extends PaymentModule
             PilipayConfig::setUseProductionEnv(false);
             $pilipayOrder             = new PilipayOrder();
             $pilipayOrder->merchantNO = pSQL(
-              '0210000202'
+                '0210000202'
             );
         }
 
@@ -490,7 +490,7 @@ class pilipay extends PaymentModule
         $this->context->smarty->assign('barcodeFileName', $barcodeFileName);
 
         if (defined('_PS_VERSION_') and version_compare(_PS_VERSION_,
-            '1.6') > 0
+                '1.6') > 0
         ) {
             $html = $this->context->smarty->fetch($this->local_path.'views/templates/admin/displayadminorder.tpl');
         } else {
@@ -524,7 +524,7 @@ class pilipay extends PaymentModule
             if ($os->add()) {
                 Configuration::updateValue(self::OS_AWAITING, $os->id);
                 copy(dirname(__FILE__).'/logo.png',
-                  dirname(__FILE__).'/../../img/os/'.(int)$os->id.'.png');
+                    dirname(__FILE__).'/../../img/os/'.(int)$os->id.'.png');
             } else {
                 return false;
             }
@@ -538,7 +538,7 @@ class pilipay extends PaymentModule
     public function checkCurrency($cart)
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
         $currency_order    = new Currency($cart->id_currency);
         $currencies_module = $this->getCurrency($cart->id_currency);
 
@@ -560,55 +560,55 @@ class pilipay extends PaymentModule
         $currency = PilipayCurrency::selectFormat();
 
         $fields_form = array(
-          'form' => array(
-            'legend' => array(
-              'title' => $this->l('Merchant details'),
-              'icon'  => 'icon-envelope',
-            ),
-            'input'  => array(
-              array(
-                'type'     => Tools::getValue(self::PILIPAY_MERCHANT_NO,
-                  Configuration::get(self::PILIPAY_MERCHANT_NO)) ? 'free' : 'text',
-                'label'    => $this->l('Merchant number'),
-                'name'     => self::PILIPAY_MERCHANT_NO,
-                'required' => true,
-              ),
-              array(
-                'type'     => Tools::getValue(self::PILIPAY_APP_SECRET,
-                  Configuration::get(self::PILIPAY_APP_SECRET)) ? 'free' : 'text',
-                'label'    => $this->l('Secret key'),
-                'name'     => self::PILIPAY_APP_SECRET,
-                'required' => true,
-              ),
-              array(
-                'type'     => 'select',
-                'label'    => $this->l('Currency'),
-                'name'     => self::PILIPAY_CURRENCY,
-                'required' => true,
-                'options'  => array(
-                  'query' => $currency,
-                  'id'    => 'id',
-                  'name'  => 'currency',
+            'form' => array(
+                'legend' => array(
+                    'title' => $this->l('Merchant details'),
+                    'icon'  => 'icon-envelope',
                 ),
-              ),
+                'input'  => array(
+                    array(
+                        'type'     => Tools::getValue(self::PILIPAY_MERCHANT_NO,
+                            Configuration::get(self::PILIPAY_MERCHANT_NO)) ? 'free' : 'text',
+                        'label'    => $this->l('Merchant number'),
+                        'name'     => self::PILIPAY_MERCHANT_NO,
+                        'required' => true,
+                    ),
+                    array(
+                        'type'     => Tools::getValue(self::PILIPAY_APP_SECRET,
+                            Configuration::get(self::PILIPAY_APP_SECRET)) ? 'free' : 'text',
+                        'label'    => $this->l('Secret key'),
+                        'name'     => self::PILIPAY_APP_SECRET,
+                        'required' => true,
+                    ),
+                    array(
+                        'type'     => 'select',
+                        'label'    => $this->l('Currency'),
+                        'name'     => self::PILIPAY_CURRENCY,
+                        'required' => true,
+                        'options'  => array(
+                            'query' => $currency,
+                            'id'    => 'id',
+                            'name'  => 'currency',
+                        ),
+                    ),
 
-              array(
-                'type'     => 'select',
-                'label'    => $this->l('Warehouses'),
-                'name'     => self::PILIPAY_WAREHOUSES,
-                'required' => true,
-                  //    'disabled' => Tools::getValue(self::PILIPAY_WAREHOUSES, Configuration::get(self::PILIPAY_WAREHOUSES))?'disabled':'',
-                'options'  => array(
-                  'query' => $options,
-                  'id'    => 'id',
-                  'name'  => 'name',
+                    array(
+                        'type'     => 'select',
+                        'label'    => $this->l('Warehouses'),
+                        'name'     => self::PILIPAY_WAREHOUSES,
+                        'required' => true,
+                        //    'disabled' => Tools::getValue(self::PILIPAY_WAREHOUSES, Configuration::get(self::PILIPAY_WAREHOUSES))?'disabled':'',
+                        'options'  => array(
+                            'query' => $options,
+                            'id'    => 'id',
+                            'name'  => 'name',
+                        ),
+                    ),
                 ),
-              ),
+                'submit' => array(
+                    'title' => $this->l('Save'),
+                ),
             ),
-            'submit' => array(
-              'title' => $this->l('Save'),
-            ),
-          ),
         );
 
         $helper                           = new HelperForm();
@@ -621,13 +621,13 @@ class pilipay extends PaymentModule
         $helper->identifier               = $this->identifier;
         $helper->submit_action            = 'btnSubmit';
         $helper->currentIndex             = $this->context->link->getAdminLink('AdminModules',
-            false).'&configure='.$this->name.
+                false).'&configure='.$this->name.
                                             '&tab_module='.$this->tab.'&module_name='.$this->name;
         $helper->token                    = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars                 = array(
-          'fields_value' => $this->getConfigFieldsValues(),
-          'languages'    => $this->context->controller->getLanguages(),
-          'id_language'  => $this->context->language->id,
+            'fields_value' => $this->getConfigFieldsValues(),
+            'languages'    => $this->context->controller->getLanguages(),
+            'id_language'  => $this->context->language->id,
         );
 
         return $helper->generateForm(array($fields_form));
@@ -640,25 +640,25 @@ class pilipay extends PaymentModule
     public function getConfigFieldsValues()
     {
         $PILIPAY_MERCHANT_NO = Tools::getValue(self::PILIPAY_MERCHANT_NO,
-          Configuration::get(self::PILIPAY_MERCHANT_NO));
+            Configuration::get(self::PILIPAY_MERCHANT_NO));
         $PILIPAY_APP_SECRET  = Tools::getValue(self::PILIPAY_APP_SECRET,
-          Configuration::get(self::PILIPAY_APP_SECRET));
+            Configuration::get(self::PILIPAY_APP_SECRET));
         $PILIPAY_CURRENCY    = Tools::getValue(self::PILIPAY_CURRENCY,
-          Configuration::get(self::PILIPAY_CURRENCY));
+            Configuration::get(self::PILIPAY_CURRENCY));
         $PILIPAY_WAREHOUSES  = Tools::getValue(self::PILIPAY_WAREHOUSES,
-          Configuration::get(self::PILIPAY_WAREHOUSES));
+            Configuration::get(self::PILIPAY_WAREHOUSES));
         $this->context->smarty->assign('PILIPAY_MERCHANT_NO',
-          $PILIPAY_MERCHANT_NO);
+            $PILIPAY_MERCHANT_NO);
         $MERCHANT_NO = $this->context->smarty->fetch($this->local_path.'views/templates/admin/merchant_no.tpl');
         $this->context->smarty->assign('PILIPAY_APP_SECRET',
-          $PILIPAY_APP_SECRET);
+            $PILIPAY_APP_SECRET);
         $APP_SECRET = $this->context->smarty->fetch($this->local_path.'views/templates/admin/app_secret.tpl');
 
         return array(
-          self::PILIPAY_MERCHANT_NO => $PILIPAY_MERCHANT_NO ? $MERCHANT_NO : $PILIPAY_MERCHANT_NO,
-          self::PILIPAY_APP_SECRET  => $PILIPAY_APP_SECRET ? $APP_SECRET : $PILIPAY_APP_SECRET,
-          self::PILIPAY_CURRENCY    => $PILIPAY_CURRENCY,
-          self::PILIPAY_WAREHOUSES  => $PILIPAY_WAREHOUSES,
+            self::PILIPAY_MERCHANT_NO => $PILIPAY_MERCHANT_NO ? $MERCHANT_NO : $PILIPAY_MERCHANT_NO,
+            self::PILIPAY_APP_SECRET  => $PILIPAY_APP_SECRET ? $APP_SECRET : $PILIPAY_APP_SECRET,
+            self::PILIPAY_CURRENCY    => $PILIPAY_CURRENCY,
+            self::PILIPAY_WAREHOUSES  => $PILIPAY_WAREHOUSES,
 
         );
     }
@@ -691,7 +691,7 @@ class pilipay extends PaymentModule
 
         if (!$authorized) {
             die($this->l('This payment method is not available.',
-              'validation'));
+                'validation'));
         }
 
         $customer = new Customer($cart->id_customer);
@@ -705,12 +705,12 @@ class pilipay extends PaymentModule
 
         // 修改订单状态为待从pilibaba支付 validateOrder method save an order to database.
         $this->validateOrder($cart->id, Configuration::get(self::OS_AWAITING),
-          $total, $this->displayName, null, null, (int)$currency->id, false,
-          $customer->secure_key);
+            $total, $this->displayName, null, null, (int)$currency->id, false,
+            $customer->secure_key);
 
         // 支付完成后的回调URL
         $paidCallbackUrl = $this->context->link->getModuleLink($this->name,
-          'result', [], true);
+            'result', [], true);
         $pageUrl         = self::_getHttpHost().__PS_BASE_URI__.'index.php?controller=history';
 
         $order = new Order($this->currentOrder);
@@ -735,9 +735,10 @@ class pilipay extends PaymentModule
             $pilipayOrder->appSecret  = pSQL(Configuration::get(self::PILIPAY_APP_SECRET)); // the secret key from pilibaba
 
             if (Configuration::get(self::PILIPAY_TESTMODE) == '1') {
-                $pilipayOrder             = new PilipayOrderdemo();
-                $pilipayOrder->merchantNO = pSQL('0210000202');  // a number for a merchant from pilibaba
-                $pilipayOrder->appSecret  = pSQL('cbkmqa1s'); // the secret key from pilibaba
+                PilipayConfig::setUseProductionEnv(false);
+                $pilipayOrder             = new PilipayOrder();
+                $pilipayOrder->merchantNO = pSQL('0210000202');
+                $pilipayOrder->appSecret  = pSQL('cbkmqa1s');
             }
 
             $pilipayOrder->currencyType = pSQL($this->_getAbbrOfCurrency($currency)); // indicates the unit of the following orderAmount, shipper, tax and price
@@ -763,7 +764,7 @@ class pilipay extends PaymentModule
                     $img = $product['image'];
                     if ($img instanceof Image) {
                         $productPictureUrl = $context->link->getImageLink($img->id_image,
-                          $img->id_image);
+                            $img->id_image);
                     }
                 }
 
@@ -788,8 +789,8 @@ class pilipay extends PaymentModule
             }
 
             $pilipayOrder->tax = min(
-              0,
-              $cart->getOrderTotal(true) - $cart->getOrderTotal(false) - ($order->total_shipping_tax_incl - $order->total_shipping_tax_excl) - $totalProductVatTax
+                0,
+                $cart->getOrderTotal(true) - $cart->getOrderTotal(false) - ($order->total_shipping_tax_incl - $order->total_shipping_tax_excl) - $totalProductVatTax
             );
 
             // render submit form
@@ -814,7 +815,7 @@ class pilipay extends PaymentModule
     protected function newAddress($order)
     {
         $pilibbabAddress = PilipayWarehouseAddress::getWarehouseAddressBy(Tools::getValue(self::PILIPAY_WAREHOUSES,
-          Configuration::get(self::PILIPAY_WAREHOUSES)));
+            Configuration::get(self::PILIPAY_WAREHOUSES)));
 
         $AddressObject              = new Address();
         $AddressObject->id_customer = $order->id_customer;
@@ -855,27 +856,27 @@ class pilipay extends PaymentModule
             $order = new Order($payResult->orderNo);
             if (strcasecmp($order->payment, $this->name) !== 0) {
                 $this->_dieWithNotifyResult(401,
-                  'This order is not paid via '.$this->name, $backUrl);
+                    'This order is not paid via '.$this->name, $backUrl);
             }
 
             $orderState = $payResult->isSuccess() ? self::OS_PAID : self::OS_ERROR;
             self::log('info',
-              "order {$order->id} is to be updated to {$orderState} via {$this->name}");
+                "order {$order->id} is to be updated to {$orderState} via {$this->name}");
 
             $orderHistory           = new OrderHistory();
             $orderHistory->id_order = $order->id;
             $orderHistory->changeIdOrderState(Configuration::get($orderState),
-              $order);
+                $order);
             $orderHistory->addWithemail();
 
             self::log('info',
-              "order {$order->id} state updated to ".$orderState);
+                "order {$order->id} state updated to ".$orderState);
 
             $backUrl .= 'index.php?controller=history'; // todo: any good back url?
             $this->_dieWithNotifyResult('1', 'Success', $backUrl);
         } catch (Exception $e) {
             $this->_dieWithNotifyResult($e->getCode(), $e->getMessage(),
-              $backUrl);
+                $backUrl);
         }
     }
 
@@ -893,11 +894,11 @@ class pilipay extends PaymentModule
     protected function _verifyConfigFromPost()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
         $PILIPAY_MERCHANT_NO = Tools::getValue(self::PILIPAY_MERCHANT_NO,
-          Configuration::get(self::PILIPAY_MERCHANT_NO));
+            Configuration::get(self::PILIPAY_MERCHANT_NO));
         $PILIPAY_APP_SECRET  = Tools::getValue(self::PILIPAY_APP_SECRET,
-          Configuration::get(self::PILIPAY_APP_SECRET));
+            Configuration::get(self::PILIPAY_APP_SECRET));
         if (Tools::isSubmit('btnSubmit')) {
             if (!trim($PILIPAY_MERCHANT_NO)) {
                 $this->_postErrors[] = $this->l('Merchant number is required.');
@@ -911,24 +912,24 @@ class pilipay extends PaymentModule
     protected function _saveConfigFromPost()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__,
-          Tools::jsonEncode(func_get_args())));
+            Tools::jsonEncode(func_get_args())));
         $PILIPAY_MERCHANT_NO = Configuration::get(self::PILIPAY_MERCHANT_NO);
         $PILIPAY_APP_SECRET  = Configuration::get(self::PILIPAY_APP_SECRET);
         if (Tools::isSubmit('btnSubmit')) {
             if (!$PILIPAY_MERCHANT_NO) {
                 Configuration::updateValue(self::PILIPAY_MERCHANT_NO,
-                  trim(Tools::getValue(self::PILIPAY_MERCHANT_NO)));
+                    trim(Tools::getValue(self::PILIPAY_MERCHANT_NO)));
             }
             if (!$PILIPAY_APP_SECRET) {
                 Configuration::updateValue(self::PILIPAY_APP_SECRET,
-                  trim(Tools::getValue(self::PILIPAY_APP_SECRET)));
+                    trim(Tools::getValue(self::PILIPAY_APP_SECRET)));
             }
             Configuration::updateValue(self::PILIPAY_CURRENCY,
-              trim(Tools::getValue(self::PILIPAY_CURRENCY,
-                Configuration::get(self::PILIPAY_CURRENCY))));
+                trim(Tools::getValue(self::PILIPAY_CURRENCY,
+                    Configuration::get(self::PILIPAY_CURRENCY))));
             Configuration::updateValue(self::PILIPAY_WAREHOUSES,
-              trim(Tools::getValue(self::PILIPAY_WAREHOUSES,
-                Configuration::get(self::PILIPAY_WAREHOUSES))));
+                trim(Tools::getValue(self::PILIPAY_WAREHOUSES,
+                    Configuration::get(self::PILIPAY_WAREHOUSES))));
         }
         $this->_html .= $this->displayConfirmation($this->l('Settings updated'));
     }
@@ -966,21 +967,21 @@ class pilipay extends PaymentModule
         try {
             if (class_exists('PrestaShopLogger')) {
                 PrestaShopLogger::addLog('pilipay:'.$level.': '.$msg, 1, 0,
-                  'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
+                    'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
             } elseif (class_exists('Logger')) {
                 $msg = strtr($msg, array(
-                  '{' => '&#123;',
-                  '}' => '&#125;',
-                  '<' => '&lt;',
-                  '>' => '&gt;',
+                    '{' => '&#123;',
+                    '}' => '&#125;',
+                    '<' => '&lt;',
+                    '>' => '&gt;',
                 ));
                 Logger::addLog('pilipay:'.$level.': '.$msg, 1, 0, 'pilipay',
-                  Configuration::get(self::PILIPAY_MERCHANT_NO));
+                    Configuration::get(self::PILIPAY_MERCHANT_NO));
             }
         } catch (Exception $e) {
             if (self::IS_IN_DEBUG_MODE) {
                 trigger_error(get_class($e).': '.$e->getMessage().PHP_EOL.$e->getTraceAsString(),
-                  E_USER_WARNING);
+                    E_USER_WARNING);
             }
         }
     }
@@ -995,16 +996,16 @@ class pilipay extends PaymentModule
     {
         $msg = date('Y-m-d H:i:s ').$level.' '.$msg.PHP_EOL;
         $msg .= sprintf(' -- %s %s with request: %s',
-          $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'],
-          Tools::jsonEncode($_REQUEST));
+            $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'],
+            Tools::jsonEncode($_REQUEST));
 
         if (self::IS_IN_DEBUG_MODE) {
             $e = new Exception();
             $msg .= PHP_EOL.str_replace(realpath(dirname(__FILE__).'/../../').'/',
-                '', $e->getTraceAsString());
+                    '', $e->getTraceAsString());
         }
         // set log path as Relative path
         @file_put_contents(dirname(__FILE__).self::LOG_FILE_PATH, $msg.PHP_EOL,
-          FILE_APPEND);
+            FILE_APPEND);
     }
 }

@@ -70,14 +70,19 @@ class PilipayOrder extends PilipayModel
         if ($this->signType == 'MD5') {
             // sign using MD5
             // not: orderAmount should be in cents
-            $this->signMsg = md5($this->merchantNO . $this->orderNo . (int)round($this->orderAmount * 100) . $this->sendTime . $this->appSecret);
+            $this->signMsg = md5($this->merchantNO.$this->orderNo.(int)round($this->orderAmount * 100).$this->sendTime.$this->appSecret);
         } else {
-            throw new PilipayError(PilipayError::INVALID_ARGUMENT, array('name' => 'signType', 'value' => $this->signType));
+            throw new PilipayError(PilipayError::INVALID_ARGUMENT,
+                array('name' => 'signType', 'value' => $this->signType));
         }
 
         // check goods list
         if (empty($this->_goodsList)) {
-            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array('name' => 'goodsList', 'value' => Tools::jsonEncode($this->_goodsList)));
+            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST,
+                array(
+                    'name'  => 'goodsList',
+                    'value' => Tools::jsonEncode($this->_goodsList),
+                ));
         }
 
         // verify
@@ -88,16 +93,19 @@ class PilipayOrder extends PilipayModel
             'merchantNO'   => $this->merchantNO,
             'currencyType' => $this->currencyType,
             'orderNo'      => $this->orderNo,
-            'orderAmount'  => (int)round($this->orderAmount * 100), // API: need to be in cent
+            'orderAmount'  => (int)round($this->orderAmount * 100),
+            // API: need to be in cent
             'orderTime'    => $this->orderTime,
             'sendTime'     => $this->sendTime,
             'pageUrl'      => $this->pageUrl,
             'serverUrl'    => $this->serverUrl,
-            'shipper'      => (int)round($this->shipper * 100), // API: need to be in cent
-            'tax'          => (int)round($this->tax * 100), // API: need to be in cent
+            'shipper'      => (int)round($this->shipper * 100),
+            // API: need to be in cent
+            'tax'          => (int)round($this->tax * 100),
+            // API: need to be in cent
             'signType'     => $this->signType,
             'signMsg'      => $this->signMsg,
-            'goodsList'    => urlencode(Tools::jsonEncode($this->_goodsList))
+            'goodsList'    => urlencode(Tools::jsonEncode($this->_goodsList)),
         ));
     }
 
@@ -110,7 +118,9 @@ class PilipayOrder extends PilipayModel
     {
         $orderData = $this->toApiArray();
 
-        PilipayLogger::instance()->log('info', 'Submit order begin: '.Tools::jsonEncode($orderData));
+        PilipayLogger::instance()
+                     ->log('info',
+                         'Submit order begin: '.Tools::jsonEncode($orderData));
 
         // submit
         $curl = new PilipayCurl();
@@ -118,26 +128,28 @@ class PilipayOrder extends PilipayModel
         $responseStatusCode = $curl->getResponseStatusCode();
         $nextUrl            = $curl->getResponseRedirectUrl();
 
-        PilipayLogger::instance()->log('info', 'Submit order end: '. print_r(array(
-                'request' => $orderData,
-                'response' => array(
-                    'statusCode' => $curl->getResponseStatusCode(),
-                    'statusText' => $curl->getResponseStatusText(),
-                    'nextUrl' => $nextUrl,
-                    'content' => $curl->getResponseContent(),
-                )
-            ), true));
+        PilipayLogger::instance()
+                     ->log('info', 'Submit order end: '.print_r(array(
+                             'request'  => $orderData,
+                             'response' => array(
+                                 'statusCode' => $curl->getResponseStatusCode(),
+                                 'statusText' => $curl->getResponseStatusText(),
+                                 'nextUrl'    => $nextUrl,
+                                 'content'    => $curl->getResponseContent(),
+                             ),
+                         ), true));
 
         return array(
-            'success' => $responseStatusCode < 400 && !empty($nextUrl),
+            'success'   => $responseStatusCode < 400 && !empty($nextUrl),
             'errorCode' => $responseStatusCode,
-            'message' => $curl->getResponseContent(),
-            'nextUrl' => $nextUrl
+            'message'   => $curl->getResponseContent(),
+            'nextUrl'   => $nextUrl,
         );
     }
 
     /**
      * @param string $method
+     *
      * @return string
      */
     public function renderSubmitForm($method = "POST")
@@ -147,48 +159,53 @@ class PilipayOrder extends PilipayModel
 
         $orderData = $this->toApiArray();
 
-        PilipayLogger::instance()->log('info', "Submit order (using {$method} form): ".Tools::jsonEncode($orderData));
+        PilipayLogger::instance()
+                     ->log('info',
+                         "Submit order (using {$method} form): ".Tools::jsonEncode($orderData));
 
         $this->context->smarty->assign('orderData', $orderData);
         $this->context->smarty->assign('action', $action);
         $this->context->smarty->assign('method', $method);
-        $html = $this->context->smarty->fetch(
-          realpath(dirname(__FILE__).'/..').'/views/templates/admin/submit.tpl'
-        );
+        $html = $this->context->smarty->fetch(realpath(dirname(__FILE__).'/..').'/views/templates/admin/submit.tpl');
 
         return $html;
     }
 
     /**
      * Update track number (logistics number)
+     *
      * @param $logisticsNo
      */
     public function updateTrackNo($logisticsNo)
     {
         $params = array(
-            'orderNo' => pSQL($this->orderNo),
-            'merchantNo' => pSQL($this->merchantNO),
+            'orderNo'     => pSQL($this->orderNo),
+            'merchantNo'  => pSQL($this->merchantNO),
             'logisticsNo' => pSQL($logisticsNo),
         );
 
-        PilipayLogger::instance()->log('info', "Update track NO: ".Tools::jsonEncode($params));
+        PilipayLogger::instance()
+                     ->log('info',
+                         "Update track NO: ".Tools::jsonEncode($params));
 
         $curl = new PilipayCurl();
         $curl->get(PilipayConfig::getUpdateTrackNoUrl(), $params);
 
-        PilipayLogger::instance()->log('info', 'Update track NO result: '. print_r(array(
-                'request' => $params,
-                'response' => array(
-                    'statusCode' => $curl->getResponseStatusCode(),
-                    'statusText' => $curl->getResponseStatusText(),
-                    'content' => $curl->getResponseContent()
-                )
-            ), true));
+        PilipayLogger::instance()
+                     ->log('info', 'Update track NO result: '.print_r(array(
+                             'request'  => $params,
+                             'response' => array(
+                                 'statusCode' => $curl->getResponseStatusCode(),
+                                 'statusText' => $curl->getResponseStatusText(),
+                                 'content'    => $curl->getResponseContent(),
+                             ),
+                         ), true));
     }
 
     /**
      * 添加商品信息
      * Add goods info
+     *
      * @param PilipayGood $good 商品信息
      */
     public function addGood(PilipayGood $good)
@@ -206,10 +223,10 @@ class PilipayOrder extends PilipayModel
     public function getBarcodePicUrl()
     {
         return PilipayConfig::getBarcodeUrl().'?'.http_build_query(
-          array(
-            'merchantNo' => pSQL($this->merchantNO),
-            'orderNo' => pSQL($this->orderNo),
-        ));
+            array(
+                'merchantNo' => pSQL($this->merchantNO),
+                'orderNo'    => pSQL($this->orderNo),
+            ));
     }
 
     public function getNumericFieldNames()
@@ -219,7 +236,21 @@ class PilipayOrder extends PilipayModel
 
     public function getRequiredFieldNames()
     {
-        return array('version', 'merchantNO', 'appSecret', 'currencyType', 'orderNo', 'orderAmount',
-                     'orderTime', 'sendTime', 'pageUrl', 'serverUrl', 'shipper', 'tax', 'signType', 'signMsg');
+        return array(
+            'version',
+            'merchantNO',
+            'appSecret',
+            'currencyType',
+            'orderNo',
+            'orderAmount',
+            'orderTime',
+            'sendTime',
+            'pageUrl',
+            'serverUrl',
+            'shipper',
+            'tax',
+            'signType',
+            'signMsg',
+        );
     }
 }
