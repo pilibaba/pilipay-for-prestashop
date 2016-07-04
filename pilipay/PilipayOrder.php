@@ -68,18 +68,14 @@ class PilipayOrder extends PilipayModel
     {
         // sign
         if ($this->signType == 'MD5') {
-            // sign using MD5
-            // not: orderAmount should be in cents
             $this->signMsg = md5($this->merchantNO.$this->orderNo.(int)round($this->orderAmount * 100).$this->sendTime.$this->appSecret);
         } else {
-            throw new PilipayError(PilipayError::INVALID_ARGUMENT,
-                array('name' => 'signType', 'value' => $this->signType));
+            throw new PilipayError(PilipayError::INVALID_ARGUMENT, array('name' => 'signType', 'value' => $this->signType));
         }
 
         // check goods list
         if (empty($this->_goodsList)) {
-            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST,
-                array(
+            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array(
                     'name'  => 'goodsList',
                     'value' => Tools::jsonEncode($this->_goodsList),
                 ));
@@ -118,9 +114,7 @@ class PilipayOrder extends PilipayModel
     {
         $orderData = $this->toApiArray();
 
-        PilipayLogger::instance()
-                     ->log('info',
-                         'Submit order begin: '.Tools::jsonEncode($orderData));
+        PilipayLogger::instance()->log('info', 'Submit order begin: '.Tools::jsonEncode($orderData));
 
         // submit
         $curl = new PilipayCurl();
@@ -128,8 +122,7 @@ class PilipayOrder extends PilipayModel
         $responseStatusCode = $curl->getResponseStatusCode();
         $nextUrl            = $curl->getResponseRedirectUrl();
 
-        PilipayLogger::instance()
-                     ->log('info', 'Submit order end: '.print_r(array(
+        PilipayLogger::instance()->log('info', 'Submit order end: '.print_r(array(
                              'request'  => $orderData,
                              'response' => array(
                                  'statusCode' => $curl->getResponseStatusCode(),
@@ -159,9 +152,7 @@ class PilipayOrder extends PilipayModel
 
         $orderData = $this->toApiArray();
 
-        PilipayLogger::instance()
-                     ->log('info',
-                         "Submit order (using {$method} form): ".Tools::jsonEncode($orderData));
+        PilipayLogger::instance()->log('info', "Submit order (using {$method} form): ".Tools::jsonEncode($orderData));
 
         $this->context->smarty->assign('orderData', $orderData);
         $this->context->smarty->assign('action', $action);
@@ -184,15 +175,12 @@ class PilipayOrder extends PilipayModel
             'logisticsNo' => pSQL($logisticsNo),
         );
 
-        PilipayLogger::instance()
-                     ->log('info',
-                         "Update track NO: ".Tools::jsonEncode($params));
+        PilipayLogger::instance()->log('info', "Update track NO: ".Tools::jsonEncode($params));
 
         $curl = new PilipayCurl();
         $curl->get(PilipayConfig::getUpdateTrackNoUrl(), $params);
 
-        PilipayLogger::instance()
-                     ->log('info', 'Update track NO result: '.print_r(array(
+        PilipayLogger::instance()->log('info', 'Update track NO result: '.print_r(array(
                              'request'  => $params,
                              'response' => array(
                                  'statusCode' => $curl->getResponseStatusCode(),
