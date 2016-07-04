@@ -25,40 +25,32 @@
 
 
 <div class="panel">
-	<div class="row panel-header">
-		<i class="icon-book"></i>							
-		MODE SELECT
-	</div>
-	<hr />
-	<div class="panel-content">
-		<div class="row padding-top">
-			<div class="col-md-6">
-				
-						<form id="mode_module_form" class="defaultForm test-mode" action="#&amp;token={$smarty.get.token|escape:'html':'UTF-8'}" method="post" >
-					       		        
-						         <div class="form-group">
-								    <label for="pili_mode">Merchant can select Test Mode to simulate payment with RMB.</label>
-								   <select id="pili_mode" name="pili_mode" class="form-control">
-											{if $mode == '1'} 
-												<option value="0">{l s='Live mode' mod='pilipay'}</option>
-												<option selected value="1">{l s='Test mode' mod='pilipay'}</option>
-											{else} 
-									        	<option selected value="0">{l s='Live mode' mod='pilipay'}</option>	
-									        	<option value="1">{l s='Test mode' mod='pilipay'}</option>
-							        		{/if}
-							        </select>
-								  </div>
-						
-								
-						
-					            <input type="submit" class="button btn btn-primary" id="module_form_submit_btn" value="{l s='Set mode' mod='pilipay'}" name="submitMode">
-				
-						</form>									
-			</div>
-			
-		</div>
-
-	</div>	
-	
-
+    <div class="row panel-header">
+        <i class="icon-book"></i>
+        MODE SELECT
+    </div>
+    <hr/>
+    <div class="panel-content">
+        <div class="row padding-top">
+            <div class="col-md-6">
+                <form id="mode_module_form" class="defaultForm test-mode"
+                      action="#&amp;token={$smarty.get.token|escape:'html':'UTF-8'}" method="post">
+                    <div class="form-group">
+                        <label for="pili_mode">Merchant can select Test Mode to simulate payment with RMB.</label>
+                        <select id="pili_mode" name="pili_mode" class="form-control">
+                            {if $mode == '1'}
+                                <option value="0">{l s='Live mode' mod='pilipay'}</option>
+                                <option selected value="1">{l s='Test mode' mod='pilipay'}</option>
+                            {else}
+                                <option selected value="0">{l s='Live mode' mod='pilipay'}</option>
+                                <option value="1">{l s='Test mode' mod='pilipay'}</option>
+                            {/if}
+                        </select>
+                    </div>
+                    <input type="submit" class="button btn btn-primary" id="module_form_submit_btn"
+                           value="{l s='Set mode' mod='pilipay'}" name="submitMode">
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
