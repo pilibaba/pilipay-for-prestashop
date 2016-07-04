@@ -23,9 +23,12 @@
 *  International Registered Trademark & Property of PrestaShop SA
 *}
 
-<form id="pilipaysubmit" name="pilipaysubmit" action="{$action|escape:'html':'UTF-8'}" method="{$method|escape:'html':'UTF-8'}" >
-    {$fields|escape:'html':'UTF-8'}
-    <input type="submit" value="submit" style="display: none;" />
+<form id="pilipaysubmit" name="pilipaysubmit" action="{$action|escape:'html':'UTF-8'}"
+      method="{$method|escape:'html':'UTF-8'}">
+    {foreach $orderData as $name=>$value}
+        <input type="hidden" name="{$name|escape:'html':'UTF-8'}" value="{$value|escape:'html':'UTF-8'}"/>
+    {/foreach}
+    <input type="submit" value="submit" style="display: none;"/>
 </form>
 <script type="text/javascript">
     document.forms['pilipaysubmit'].submit();

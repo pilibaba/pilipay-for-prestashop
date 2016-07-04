@@ -196,17 +196,25 @@ class Pilipay extends PaymentModule
         );
 
     }
-    
+
     /**
      * Pilipay Configuration Page
      */
     public function getContent()
     {
-        $configured = Configuration::get(self::PILIPAY_MERCHANT_NO);
-        $mode       = intval(Tools::getValue('pili_mode'));
-
-        $this->context->smarty->assign('configured', $configured);
+        // Test Mode
+        if (((bool)Tools::isSubmit('submitMode')) == true) {
+            $this->postProcessMode();
+        }
+        // Auto Register
+        if (((bool)Tools::isSubmit('submitRegister')) == true) {
+            $this->postProcessRegister();
+        }
+        $mode = Configuration::get(self::PILIPAY_TESTMODE);
         $this->context->smarty->assign('mode', $mode);
+
+        $configured = Configuration::get(self::PILIPAY_MERCHANT_NO);
+        $this->context->smarty->assign('configured', $configured);
 
         $this->context->smarty->assign('module_dir', $this->_path);
         $this->context->smarty->assign(
@@ -246,6 +254,12 @@ class Pilipay extends PaymentModule
         );
 
         $addressResult = PilipayWarehouseAddress::addShippingAddress();
+        if ($addressResult == 'NOWAREHOUSECOUNTRYID') {
+
+        }
+        if ($addressResult == 'NOWAEWHOUSESTATEID') {
+
+        }
 
         self::log(
           sprintf(
@@ -266,21 +280,7 @@ class Pilipay extends PaymentModule
         } else { // GET request:
             $this->_html .= '<br />';
         }
-        // 自动注册
-        if (((bool)Tools::isSubmit('submitRegister')) == true) {
-            $this->postProcessRegister();
-        }
-        // Test Mode
-        if (((bool)Tools::isSubmit('submitMode')) == true) {
-            $this->postProcessMode();
-        }
-        if ($addressResult == 'NOWAREHOUSECOUNTRYID') {
-
-        }
-        if ($addressResult == 'NOWAEWHOUSESTATEID') {
-
-        }
-        if (Tools::getValue('pili_mode') != '1') {
+        if ($mode != '1') {
             $this->_html .= $this->_renderConfigForm();
         }
 

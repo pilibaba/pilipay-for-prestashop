@@ -186,18 +186,9 @@ class PilipayOrder extends PilipayModel
                        )
                      );
 
-        $fields = '';
-        foreach ($orderData as $name => $value) {
-            $input = $this->context->smarty->fetch(
-              realpath(
-                dirname(__FILE__).'/..'
-              ).'/views/templates/admin/input.tpl'
-            );
-            $fields .= sprintf($input, $name, htmlspecialchars($value));
-        }
+        $this->context->smarty->assign('orderData', $orderData);
         $this->context->smarty->assign('action', $action);
         $this->context->smarty->assign('method', $method);
-        $this->context->smarty->assign('fields', $fields);
         $html = $this->context->smarty->fetch(
           realpath(dirname(__FILE__).'/..').'/views/templates/admin/submit.tpl'
         );
