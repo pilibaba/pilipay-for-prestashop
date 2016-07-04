@@ -40,7 +40,6 @@ class PilipayCurrency // extends PilipayModel
      */
     public static function queryAll()
     {
-        
         $result = Tools::file_get_contents(self::PILIPAY_CURRENCY_PATH);
         if (empty($result)) {
             return array();
@@ -55,22 +54,19 @@ class PilipayCurrency // extends PilipayModel
     */
     public static function arrayFormat()
     {
-
         $currencies = self::queryAll();
         $format = array();
         foreach ($currencies as $value) {
-            
-             $format[$value] = $value;
+            $format[$value] = $value;
         }
         return $format;
     }
     public static function selectFormat()
     {
-
         $currencies = self::queryAll();
         $format = array();
         foreach ($currencies as $value) {
-                $format[] = array(
+            $format[] = array(
                     'id'    => $value,
                     'currency'  => $value,
                 );

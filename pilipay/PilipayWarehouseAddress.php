@@ -64,11 +64,10 @@ class PilipayWarehouseAddress
     */
     public static function addressFormat()
     {
-
         $addresses = self::queryAll();
         $newAddresses = array();
         foreach ($addresses as $key => $value) {
-             // $newAddresses[$key]['id'] = $value['id'];
+            // $newAddresses[$key]['id'] = $value['id'];
              // $newAddresses[$key]['name'] = $value['state'].' '.$value['city'].' '.$value['address'].' / '.$value['country'];
 
              $newAddresses[] = array(

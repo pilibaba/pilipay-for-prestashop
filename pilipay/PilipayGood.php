@@ -65,7 +65,7 @@ class PilipayGood extends PilipayModel
             // required:
             'name'       => $this->name,
             'pictureURL' => $this->pictureUrl,
-            'price'      => (int)round($this->price * 100),// API: need a price in cent (in order.currencyType)
+            'price'      => (int)round($this->price * 100), // API: need a price in cent (in order.currencyType)
             'productURL' => $this->productUrl,
             'productId'  => $this->productId,
             'quantity'   => (int)round($this->quantity),
@@ -90,7 +90,7 @@ class PilipayGood extends PilipayModel
      */
     public static function convertWeightToGram($amount, $unit)
     {
-        switch (Tools::strtolower($unit)){
+        switch (Tools::strtolower($unit)) {
             case 'g':
                 return $amount;
             case 'kg':

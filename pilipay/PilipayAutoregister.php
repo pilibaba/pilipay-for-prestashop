@@ -35,7 +35,7 @@ class PilipayAutoregister // extends PilipayModel
 
     const PLATFORM_NO = '0210000489'; //'0210000451'; // x-cart.com platformNo
     const SECRECT_KEY = 'u8r0rpgj';//'cuej80z6'; // x-cart.com secrect-key
-    
+
     /**
      * query all pilibaba supported currency
      * 
@@ -43,7 +43,6 @@ class PilipayAutoregister // extends PilipayModel
      */
     public static function register($array)
     {
-
         $header = array(
             'Content-Type: application/json',
         );

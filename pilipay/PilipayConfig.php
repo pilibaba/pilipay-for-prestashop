@@ -218,4 +218,3 @@ class PilipayConfig
         return self::getPilibabaHost().self::SUPPORTED_CURRENCIES_PATH;
     }
 }
-
