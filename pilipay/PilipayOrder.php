@@ -214,7 +214,8 @@ class PilipayOrder extends PilipayModel
             array(
                 'merchantNo' => pSQL($this->merchantNO),
                 'orderNo'    => pSQL($this->orderNo),
-            ));
+            )
+        );
     }
 
     public function getNumericFieldNames()

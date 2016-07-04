@@ -405,8 +405,7 @@ class Pilipay extends PaymentModule
      */
     public function hookActionAdminOrdersTrackingNumberUpdate($params)
     {
-        self::log(sprintf("Calling %s with %s", __METHOD__,
-            Tools::jsonEncode(func_get_args())));
+        self::log(sprintf("Calling %s with %s", __METHOD__, Tools::jsonEncode(func_get_args())));
 
         try {
             /**@var $order Order */
@@ -527,15 +526,13 @@ class Pilipay extends PaymentModule
                 ),
                 'input'  => array(
                     array(
-                        'type'     => Tools::getValue(self::PILIPAY_MERCHANT_NO,
-                            Configuration::get(self::PILIPAY_MERCHANT_NO)) ? 'free' : 'text',
+                        'type'     => Tools::getValue(self::PILIPAY_MERCHANT_NO, Configuration::get(self::PILIPAY_MERCHANT_NO)) ? 'free' : 'text',
                         'label'    => $this->l('Merchant number'),
                         'name'     => self::PILIPAY_MERCHANT_NO,
                         'required' => true,
                     ),
                     array(
-                        'type'     => Tools::getValue(self::PILIPAY_APP_SECRET,
-                            Configuration::get(self::PILIPAY_APP_SECRET)) ? 'free' : 'text',
+                        'type'     => Tools::getValue(self::PILIPAY_APP_SECRET, Configuration::get(self::PILIPAY_APP_SECRET)) ? 'free' : 'text',
                         'label'    => $this->l('Secret key'),
                         'name'     => self::PILIPAY_APP_SECRET,
                         'required' => true,
