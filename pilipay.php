@@ -768,7 +768,7 @@ class Pilipay extends PaymentModule
         $AddressObject->phone       = pSQL($pilibbabAddress['tel']);
         $AddressObject->postcode    = pSQL($pilibbabAddress['zipcode']);
         $AddressObject->alias       = 'pilibaba';
-        $address                    = $AddressObject->add();
+        $AddressObject->add();
 
         return $AddressObject->id;
     }
@@ -789,12 +789,12 @@ class Pilipay extends PaymentModule
                 $secret = Configuration::get(self::PILIPAY_APP_SECRET);
             }
             if (!$payResult->verify($secret)) {
-                $this->_dieWithNotifyResult(400, 'Invalid request', $backUrl);
+                $this->dieWithNotifyResult(400, $backUrl);
             }
 
             $order = new Order($payResult->orderNo);
             if (strcasecmp($order->payment, $this->name) !== 0) {
-                $this->_dieWithNotifyResult(401, 'This order is not paid via '.$this->name, $backUrl);
+                $this->dieWithNotifyResult(401, $backUrl);
             }
 
             $orderState = $payResult->isSuccess() ? self::OS_PAID : self::OS_ERROR;
@@ -808,9 +808,9 @@ class Pilipay extends PaymentModule
             self::log('info', "order {$order->id} state updated to ".$orderState);
 
             $backUrl .= 'index.php?controller=history'; // todo: any good back url?
-            $this->_dieWithNotifyResult('1', 'Success', $backUrl);
+            $this->dieWithNotifyResult('1', $backUrl);
         } catch (Exception $e) {
-            $this->_dieWithNotifyResult($e->getCode(), $e->getMessage(), $backUrl);
+            $this->dieWithNotifyResult($e->getCode(), $backUrl);
         }
     }
 
@@ -862,10 +862,11 @@ class Pilipay extends PaymentModule
      * die with the code/msg/redirectUrl in pilipay callback request
      *
      * @param $code
-     * @param $msg
      * @param $redirectUrl
+     *
+     * @internal param $msg
      */
-    protected function _dieWithNotifyResult($code, $msg, $redirectUrl)
+    protected function dieWithNotifyResult($code, $redirectUrl)
     {
         echo "<result>{$code}</result><redirecturl>{$redirectUrl}</redirecturl>";
         die;
