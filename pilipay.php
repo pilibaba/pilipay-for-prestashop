@@ -763,8 +763,8 @@ class Pilipay extends PaymentModule
         $AddressObject->lastname    = pSQL($pilibbabAddress['lastName']);
         $AddressObject->address1    = pSQL($pilibbabAddress['address']);
         $AddressObject->city        = pSQL($pilibbabAddress['city']);
-        $AddressObject->id_country  = pSQL(PilipayWarehouseAddress::_getCountryId());
-        $AddressObject->id_state    = pSQL(PilipayWarehouseAddress::_getStateId());
+        $AddressObject->id_country  = pSQL(PilipayWarehouseAddress::getCountryId());
+        $AddressObject->id_state    = pSQL(PilipayWarehouseAddress::getStateId());
         $AddressObject->phone       = pSQL($pilibbabAddress['tel']);
         $AddressObject->postcode    = pSQL($pilibbabAddress['zipcode']);
         $AddressObject->alias       = 'pilibaba';

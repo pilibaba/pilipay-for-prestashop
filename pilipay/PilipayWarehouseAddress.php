@@ -1,28 +1,28 @@
 <?php
 /**
-* 2007-2016 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-*  @author    PrestaShop SA <contact@prestashop.com>
-*  @copyright 2007-2016 PrestaShop SA
-*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
-*  International Registered Trademark & Property of PrestaShop SA
-*/
+ * 2007-2016 PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ * @author    PrestaShop SA <contact@prestashop.com>
+ * @copyright 2007-2016 PrestaShop SA
+ * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  International Registered Trademark & Property of PrestaShop SA
+ */
 
 /**
  * Class PilipayWarehouseAddress
@@ -56,25 +56,25 @@ class PilipayWarehouseAddress
         }
 
         $array = Tools::jsonDecode($result, true);
+
         return $array;
     }
 
-    /*
-        格式化地址
-    */
+    /**
+     * Format address
+     * @return array
+     */
     public static function addressFormat()
     {
-        $addresses = self::queryAll();
+        $addresses    = self::queryAll();
         $newAddresses = array();
-        foreach ($addresses as $key => $value) {
-            // $newAddresses[$key]['id'] = $value['id'];
-             // $newAddresses[$key]['name'] = $value['state'].' '.$value['city'].' '.$value['address'].' / '.$value['country'];
-
-             $newAddresses[] = array(
-                    'id'    => $value['id'],
-                    'name'  => $value['state'].' '.$value['city'].' '.$value['address'].' / '.$value['country'].';'
-                );
+        foreach ($addresses as $value) {
+            $newAddresses[] = array(
+                'id'   => $value['id'],
+                'name' => $value['state'].' '.$value['city'].' '.$value['address'].' / '.$value['country'].';',
+            );
         }
+
         return $newAddresses;
     }
 
@@ -85,7 +85,7 @@ class PilipayWarehouseAddress
     public static function getWarehouseAddressBy($val, $k = 'id')
     {
         $addressList = self::queryAll();
-        foreach ($addressList as $key => $value) {
+        foreach ($addressList as $value) {
             if ($value[$k] == $val) {
                 return $value;
             }
@@ -97,28 +97,29 @@ class PilipayWarehouseAddress
     public static function shippingAddressFormat()
     {
         $warehouseId = Tools::getValue(self::PILIPAY_WAREHOUSES, Configuration::get(self::PILIPAY_WAREHOUSES));
+
         return self::getWarehouseAddressBy($warehouseId);
     }
 
     public static function addShippingAddress()
     {
         //判断Warehouse是否存在state ID
-        if (!self::_getStateId()) {
+        if (!self::getStateId()) {
             return 'NOWAEWHOUSESTATEID';
         }
-        if (!self::_getCountryId()) {
+        if (!self::getCountryId()) {
             return 'NOWAREHOUSECOUNTRYID';
         }
     }
 
     //获取Warehouse的state ID
-    public static function _getStateId()
+    public static function getStateId()
     {
         return State::getIdByIso(self::shippingAddressFormat()['isoStateCode']);
     }
 
     //获取Warehouse的country ID
-    public static function _getCountryId()
+    public static function getCountryId()
     {
         return Country::getByIso(self::shippingAddressFormat()['iso2CountryCode']);
     }
