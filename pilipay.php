@@ -238,9 +238,7 @@ class Pilipay extends PaymentModule
             'currency'   => $currency,
             'logistics'  => $logistics,
         );
-
         $response = PilipayAutoregister::register($data);
-
         $this->saveRegisterResponse($response);
     }
 
@@ -259,6 +257,7 @@ class Pilipay extends PaymentModule
                 Configuration::updateValue(self::PILIPAY_MERCHANT_NO, $array['data']['merchantNo']);
                 Configuration::updateValue(self::PILIPAY_APP_SECRET, $array['data']['privateKey']);
                 Configuration::updateValue(self::PILIPAY_WAREHOUSES, Tools::getValue('pili_warehouse_id'));
+                Configuration::updateValue(self::PILIPAY_CURRENCY, Tools::getValue('pili_currency'));
             }
             $this->_html .= $this->displayConfirmation($this->l('Pilibaba merchant account auto registered!'));
         } else {
