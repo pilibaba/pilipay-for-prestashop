@@ -28,12 +28,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once(dirname(__FILE__).'/pilipay/autoload.php');
+include_once _PS_MODULE_DIR_.'pilipay/pilipay/autoload.php';
 
 class Pilipay extends PaymentModule
 {
-    const     IS_IN_DEBUG_MODE = false; // is to debug?
-    const     LOG_FILE_PATH = '/log/pilipay.log';
+    const     DEBUG_MODE = false; // is to debug?
+    const     LOG_FILE = '/log/pilipay.log';
 
     protected $_html = '';
     protected $_postErrors = array();
@@ -43,8 +43,6 @@ class Pilipay extends PaymentModule
     public $currency;
     public $warehouse;
     public $testmode;
-
-    public $model;
 
     const PILIPAY_TESTMODE = 'PILIPAY_TESTMODE';
     const PILIPAY_MERCHANT_NO = 'PILIPAY_MERCHANT_NO';
@@ -597,10 +595,8 @@ class Pilipay extends PaymentModule
         //以下几行代码用来修改订单地址到 pilibaba warehouse。
         $id_address = $this->newAddress($order);
         $sql        = 'UPDATE `'._DB_PREFIX_.'orders` 
-            SET `id_address_delivery` ='.(int)$id_address.',
-            `id_address_invoice` = '.(int)$id_address.'
-            WHERE id_order='.(int)$this->currentOrder;
-
+                       SET `id_address_delivery` ='.(int)$id_address.',`id_address_invoice` = '.(int)$id_address.'
+                       WHERE id_order='.(int)$this->currentOrder;
         Db::getInstance()->execute($sql);
 
         if (!Validate::isLoadedObject($order)) {
@@ -818,9 +814,9 @@ class Pilipay extends PaymentModule
             list($level, $msg) = array('debug', $level);
         }
 
-        if ($level == 'debug' && !self::IS_IN_DEBUG_MODE) {
+        if ($level == 'debug' && !self::DEBUG_MODE) {
             return;
-        } elseif ($level == 'debug' && self::IS_IN_DEBUG_MODE) {
+        } elseif ($level == 'debug' && self::DEBUG_MODE) {
             self::logToFile($level, $msg);
         }
 
@@ -837,7 +833,7 @@ class Pilipay extends PaymentModule
                 Logger::addLog('pilipay:'.$level.': '.$msg, 1, 0, 'pilipay', Configuration::get(self::PILIPAY_MERCHANT_NO));
             }
         } catch (Exception $e) {
-            if (self::IS_IN_DEBUG_MODE) {
+            if (self::DEBUG_MODE) {
                 trigger_error(get_class($e).': '.$e->getMessage().PHP_EOL.$e->getTraceAsString(), E_USER_WARNING);
             }
         }
@@ -854,11 +850,11 @@ class Pilipay extends PaymentModule
         $msg = date('Y-m-d H:i:s ').$level.' '.$msg.PHP_EOL;
         $msg .= sprintf(' -- %s %s with request: %s', $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'], Tools::jsonEncode($_REQUEST));
 
-        if (self::IS_IN_DEBUG_MODE) {
+        if (self::DEBUG_MODE) {
             $e = new Exception();
             $msg .= PHP_EOL.str_replace(realpath(dirname(__FILE__).'/../../').'/', '', $e->getTraceAsString());
         }
         // set log path as Relative path
-        @file_put_contents(dirname(__FILE__).self::LOG_FILE_PATH, $msg.PHP_EOL, FILE_APPEND);
+        @file_put_contents(dirname(__FILE__).self::LOG_FILE, $msg.PHP_EOL, FILE_APPEND);
     }
 }
