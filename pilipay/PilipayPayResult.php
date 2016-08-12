@@ -66,12 +66,13 @@ class PilipayPayResult
     protected $_orderNo;
     protected $_orderAmount;
     protected $_signType;
-    protected $_payResult;
     protected $_signMsg;
-    protected $_sendTime;
-    protected $_dealId;
     protected $_fee;
+    protected $_orderTime;
     protected $_customerMail;
+    protected $_errorCode;
+    protected $_errorMessage;
+    protected $_dealId;
 
     /**
      * @param array $request
@@ -100,9 +101,11 @@ class PilipayPayResult
      */
     public function verify($appSecret, $throws = false)
     {
-        $calcedSignMsg = md5($this->_merchantNO . $this->_orderNo . (int)round($this->_orderAmount) . $this->_sendTime . $appSecret);
+        $calcedSignMsg = md5($this->_merchantNo . $this->_orderNo . $this->_orderAmount
+                            . $this->_signType . $this->_dealId . $this->_fee
+                            . $this->_orderTime . $this->_customerMail . $appSecret);
 
-        if ($calcedSignMsg != $this->_signMsg) {
+        if (strcasecmp($calcedSignMsg, $this->_signMsg) !== 0){
             PilipayLogger::instance()->log("error", "Invalid signMsg: " . $this->_signMsg . " with secret: " . $appSecret . " with data: " . Tools::jsonEncode(get_object_vars($this)));
 
             if ($throws) {
@@ -111,7 +114,6 @@ class PilipayPayResult
 
             return false;
         }
-
         return true;
     }
 
@@ -120,7 +122,7 @@ class PilipayPayResult
      */
     public function isSuccess()
     {
-        return $this->_payResult == 10; // 10:pay success 11:pay fail
+        return true; // currently, if there is a callback request, it means the payment is successfully completed.
     }
 
     /**
@@ -141,15 +143,17 @@ class PilipayPayResult
     // setter using the default
 
     /**
-     * @param $result
-     * @param $message
-     * @param $redirectUrl
+     * return result to pilibaba
+     * @param $result "1" or "OK" means result is success
      * @param $andDie bool
      * @return null
      */
-    public function returnDealResultToPilibaba($result, $message, $redirectUrl, $andDie = true)
-    {
-        echo "<result>$result</result><redirecturl>$redirectUrl</redirecturl><message>$message</message>";
+    public function returnDealResultToPilibaba($result, $andDie=true){
+        if ($result == 1 or $result == 'OK'){
+            echo 'OK';
+        } else {
+            echo $result;
+        }
 
         if ($andDie) {
             die;
@@ -164,7 +168,7 @@ class PilipayPayResult
      */
     public function getErrorCode()
     {
-        return $this->_payResult;
+        return $this->_errorCode;
     }
 
     /**
@@ -173,7 +177,7 @@ class PilipayPayResult
      */
     public function getErrorMsg()
     {
-        return $this->_errorCode;
+        return $this->_errorMessage;
     }
 
     /**
@@ -223,11 +227,11 @@ class PilipayPayResult
 
     /**
      * @return mixed
-     * @property $sendTime      string  the time when the order was sent. Its format is like "2011-12-13 14:15:16".
+     * @property $orderTime      string  the time when the order was sent. Its format is like "2011-12-13 14:15:16".
      */
-    public function getSendTime()
+    public function getOrderTime()
     {
-        return $this->_sendTime;
+        return $this->_orderTime;
     }
 
     /**

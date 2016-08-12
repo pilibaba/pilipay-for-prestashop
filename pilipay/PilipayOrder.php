@@ -28,23 +28,25 @@
  * Class PilipayOrder
  *
  * required:
- * @property $version      string  API version. currently v1.0.1
+ * @property $version      string  API version.
  * @property $merchantNO   string  merchant number in account info page after signed up in pilibaba.com
- * @property $appSecret    string  app secret key in account info page
  * @property $currencyType string  USD/EUR/GBP/AUD/CAD/JPY...
  * @property $orderNo      string  order number in your site, which identifies an order
  * @property $orderAmount  number  total order amount in currencyType
  * @property $orderTime    string  the time when the order was created, in format of 2001-12-13 14:15:16
- * @property $sendTime     string  the time when the order was sent, in format of 2001-12-13 14:15:16
  * @property $pageUrl      string  the order's checkout page
  * @property $serverUrl    string  the return URL after payment is completed successfully
+ * @property $redirectUrl  string  pay success return page to user
+ * @property $notifyType   string  what type of code I return. The value: html, json.
  * @property $shipper      number  ship fee (it's to houseware's fee, not the international ship fee) (in currencyType)
  * @property $tax          number  sales tax (in currencyType)
  *
  * @property $signType     string  "MD5" (fixed)
- * @property $signMsg      string  = MD5(merchantNO+orderNo+orderAmount+sendTime+appSecrect) (auto calculated)
+ * @property $signMsg      string  the sign messaged. it will be autometically calcuated
  *
- * goods -- should use addGood() to add goods to the order
+ * @property $appSecret    string  app secret key in account info page
+ *
+ * as to goods -- you should use addGood() to add goods to the order
  *
  */
 class PilipayOrder extends PilipayModel
@@ -54,8 +56,9 @@ class PilipayOrder extends PilipayModel
 
     public function __construct($properties = array())
     {
-        $this->version  = '1.0.1';
-        $this->signType = 'MD5';
+        $this->version    = 'V2.0.01';
+        $this->signType   = 'MD5';
+        $this->notifyType = 'html';
 
         parent::__construct($properties);
     }
@@ -66,43 +69,55 @@ class PilipayOrder extends PilipayModel
      */
     public function toApiArray()
     {
-        // sign
-        if ($this->signType == 'MD5') {
-            $this->signMsg = md5($this->merchantNO.$this->orderNo.(int)round($this->orderAmount * 100).$this->sendTime.$this->appSecret);
-        } else {
-            throw new PilipayError(PilipayError::INVALID_ARGUMENT, array('name' => 'signType', 'value' => $this->signType));
-        }
 
         // check goods list
         if (empty($this->_goodsList)) {
-            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array(
-                    'name'  => 'goodsList',
-                    'value' => Tools::jsonEncode($this->_goodsList),
-                ));
+            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array('name'  => 'goodsList',
+                                                                                   'value' => json_encode($this->_goodsList),
+            ));
+        }
+
+        // if the orderTime or sendTime is omitted, use current time
+        if (empty($this->orderTime)) {
+            $now             = date_create('now', timezone_open('Asia/Shanghai'))->format('Y-m-d H:i:s');
+            $this->orderTime = $this->orderTime ? $this->orderTime : $now;
         }
 
         // verify
         parent::verifyFields();
 
-        return array_map('strval', array(
+        $apiArray = array_map('strval', array(
             'version'      => $this->version,
-            'merchantNO'   => $this->merchantNO,
+            'merchantNo'   => $this->merchantNO,
             'currencyType' => $this->currencyType,
             'orderNo'      => $this->orderNo,
             'orderAmount'  => (int)round($this->orderAmount * 100),
-            // API: need to be in cent
             'orderTime'    => $this->orderTime,
-            'sendTime'     => $this->sendTime,
             'pageUrl'      => $this->pageUrl,
             'serverUrl'    => $this->serverUrl,
+            'redirectUrl'  => $this->redirectUrl,
+            'notifyType'   => $this->notifyType,
             'shipper'      => (int)round($this->shipper * 100),
-            // API: need to be in cent
             'tax'          => (int)round($this->tax * 100),
-            // API: need to be in cent
             'signType'     => $this->signType,
-            'signMsg'      => $this->signMsg,
-            'goodsList'    => urlencode(Tools::jsonEncode($this->_goodsList)),
         ));
+        // sign
+        if ($this->signType == 'MD5') {
+            // sign using MD5
+            $this->signMsg       = md5(implode('', $apiArray).$this->appSecret);
+            $apiArray['signMsg'] = $this->signMsg;
+        } else {
+            throw new PilipayError(PilipayError::INVALID_ARGUMENT, array(
+                'name'  => 'signType',
+                'value' => $this->signType,
+            ));
+        }
+//        echo '<pre>';
+//        print_r($this->_goodsList);
+//        echo '</pre>';
+//        exit;
+        $apiArray['goodsList'] = urlencode(Tools::jsonEncode($this->_goodsList));
+        return $apiArray;
     }
 
     /**
@@ -112,7 +127,8 @@ class PilipayOrder extends PilipayModel
      */
     public function submit()
     {
-        $orderData = $this->toApiArray();
+        $this->notifyType = 'html';
+        $orderData        = $this->toApiArray();
 
         PilipayLogger::instance()->log('info', 'Submit order begin: '.Tools::jsonEncode($orderData));
 
@@ -123,14 +139,15 @@ class PilipayOrder extends PilipayModel
         $nextUrl            = $curl->getResponseRedirectUrl();
 
         PilipayLogger::instance()->log('info', 'Submit order end: '.print_r(array(
-                             'request'  => $orderData,
-                             'response' => array(
-                                 'statusCode' => $curl->getResponseStatusCode(),
-                                 'statusText' => $curl->getResponseStatusText(),
-                                 'nextUrl'    => $nextUrl,
-                                 'content'    => $curl->getResponseContent(),
-                             ),
-                         ), true));
+                'url'      => PilipayConfig::getSubmitOrderUrl(),
+                'request'  => $orderData,
+                'response' => array(
+                    'statusCode' => $curl->getResponseStatusCode(),
+                    'statusText' => $curl->getResponseStatusText(),
+                    'nextUrl'    => $nextUrl,
+                    'content'    => $curl->getResponseContent(),
+                ),
+            ), true));
 
         return array(
             'success'   => $responseStatusCode < 400 && !empty($nextUrl),
@@ -150,7 +167,8 @@ class PilipayOrder extends PilipayModel
         $this->context = Context::getContext();
         $action        = PilipayConfig::getSubmitOrderUrl();
 
-        $orderData = $this->toApiArray();
+        $this->notifyType = 'html';
+        $orderData        = $this->toApiArray();
 
         PilipayLogger::instance()->log('info', "Submit order (using {$method} form): ".Tools::jsonEncode($orderData));
 
@@ -173,6 +191,7 @@ class PilipayOrder extends PilipayModel
             'orderNo'     => pSQL($this->orderNo),
             'merchantNo'  => pSQL($this->merchantNO),
             'logisticsNo' => pSQL($logisticsNo),
+            'signMsg'     => md5($this->orderNo.$logisticsNo.$this->merchantNo.$this->appSecret),
         );
 
         PilipayLogger::instance()->log('info', "Update track NO: ".Tools::jsonEncode($params));
@@ -181,41 +200,31 @@ class PilipayOrder extends PilipayModel
         $curl->get(PilipayConfig::getUpdateTrackNoUrl(), $params);
 
         PilipayLogger::instance()->log('info', 'Update track NO result: '.print_r(array(
-                             'request'  => $params,
-                             'response' => array(
-                                 'statusCode' => $curl->getResponseStatusCode(),
-                                 'statusText' => $curl->getResponseStatusText(),
-                                 'content'    => $curl->getResponseContent(),
-                             ),
-                         ), true));
+                'request'  => $params,
+                'response' => array(
+                    'statusCode' => $curl->getResponseStatusCode(),
+                    'statusText' => $curl->getResponseStatusText(),
+                    'content'    => $curl->getResponseContent(),
+                ),
+            ), true));
     }
 
     /**
      * 添加商品信息
      * Add goods info
-     *
      * @param PilipayGood $good 商品信息
      */
     public function addGood(PilipayGood $good)
     {
         $this->_goodsList[] = $good->toApiArray();
     }
-
-    /**
-     * Get the barcode's Picture URL
-     * -- this barcode should be print on the cover of package before shipping, so that our warehouse could easily match the package.
-     * 获取条形码的图片URL
-     * -- 在邮寄前, 这个条形码应该打印到包裹的包装上, 以便我们的中转仓库识别包裹.
-     * @return string the barcode's Picture URL
-     */
+    
     public function getBarcodePicUrl()
     {
-        return PilipayConfig::getBarcodeUrl().'?'.http_build_query(
-            array(
+        return PilipayConfig::getBarcodeUrl().'?'.http_build_query(array(
                 'merchantNo' => pSQL($this->merchantNO),
                 'orderNo'    => pSQL($this->orderNo),
-            )
-        );
+            ));
     }
 
     public function getNumericFieldNames()
@@ -227,19 +236,19 @@ class PilipayOrder extends PilipayModel
     {
         return array(
             'version',
-            'merchantNO',
+            'merchantNo',
             'appSecret',
             'currencyType',
             'orderNo',
             'orderAmount',
             'orderTime',
-            'sendTime',
             'pageUrl',
             'serverUrl',
+            'redirectUrl',
+            'notifyType',
             'shipper',
             'tax',
             'signType',
-            'signMsg',
         );
     }
 }

@@ -616,13 +616,13 @@ class Pilipay extends PaymentModule
                 $pilipayOrder->appSecret  = pSQL($this->appSecret);
             }
 
-            $pilipayOrder->currencyType = pSQL($this->getAbbrOfCurrency($currency)); // indicates the unit of the following orderAmount, shipper, tax and price
-            $pilipayOrder->orderNo      = pSQL($order->id); //reference; //这里是用 orderNo 还是 reference?
+            $pilipayOrder->currencyType = pSQL($this->getAbbrOfCurrency($currency));
+            $pilipayOrder->orderNo      = pSQL($order->id);
             $pilipayOrder->orderAmount  = $total;
             $pilipayOrder->orderTime    = date('Y-m-d H:i:s');
-            $pilipayOrder->sendTime     = date('Y-m-d H:i:s');
             $pilipayOrder->pageUrl      = pSQL($pageUrl); //self::_getHttpHost() . '/index.php?controller=history';
             $pilipayOrder->serverUrl    = pSQL($paidCallbackUrl);
+            $pilipayOrder->redirectUrl  = pSQL($paidCallbackUrl);
             $pilipayOrder->shipper      = $order->total_shipping_tax_incl;
 
             $totalProductVatTax = 0;
@@ -710,8 +710,6 @@ class Pilipay extends PaymentModule
      */
     public function processPayResult()
     {
-        $backUrl = self::getHttpHost().__PS_BASE_URI__;
-
         try {
             $payResult = PilipayPayResult::fromRequest();
             if (Configuration::get(self::PILIPAY_TESTMODE) == '1') {
@@ -720,12 +718,12 @@ class Pilipay extends PaymentModule
                 $secret = Configuration::get(self::PILIPAY_APP_SECRET);
             }
             if (!$payResult->verify($secret)) {
-                $this->dieWithNotifyResult(400, $backUrl);
+                $payResult->returnDealResultToPilibaba(400);
             }
 
             $order = new Order($payResult->orderNo);
             if (strcasecmp($order->payment, $this->name) !== 0) {
-                $this->dieWithNotifyResult(401, $backUrl);
+                $payResult->returnDealResultToPilibaba(401);
             }
 
             $orderState = $payResult->isSuccess() ? self::OS_PAID : self::OS_ERROR;
@@ -738,10 +736,9 @@ class Pilipay extends PaymentModule
 
             self::log('info', "order {$order->id} state updated to ".$orderState);
 
-            $backUrl .= 'index.php?controller=history';
-            $this->dieWithNotifyResult('1', $backUrl);
+            $payResult->returnDealResultToPilibaba(1);
         } catch (Exception $e) {
-            $this->dieWithNotifyResult($e->getCode(), $backUrl);
+            $payResult->returnDealResultToPilibaba($e->getCode());
         }
     }
 
@@ -787,20 +784,6 @@ class Pilipay extends PaymentModule
             Configuration::updateValue(self::PILIPAY_WAREHOUSES, trim(Tools::getValue(self::PILIPAY_WAREHOUSES, Configuration::get(self::PILIPAY_WAREHOUSES))));
         }
         $this->_html .= $this->displayConfirmation($this->l('Settings updated'));
-    }
-
-    /**
-     * die with the code/msg/redirectUrl in pilipay callback request
-     *
-     * @param $code
-     * @param $redirectUrl
-     *
-     * @internal param $msg
-     */
-    protected function dieWithNotifyResult($code, $redirectUrl)
-    {
-        echo "<result>{$code}</result><redirecturl>{$redirectUrl}</redirecturl>";
-        die;
     }
 
     protected function getHttpHost()
