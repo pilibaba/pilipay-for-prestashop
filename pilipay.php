@@ -622,7 +622,7 @@ class Pilipay extends PaymentModule
             $pilipayOrder->orderTime    = date('Y-m-d H:i:s');
             $pilipayOrder->pageUrl      = pSQL($pageUrl); //self::_getHttpHost() . '/index.php?controller=history';
             $pilipayOrder->serverUrl    = pSQL($paidCallbackUrl);
-            $pilipayOrder->redirectUrl  = pSQL($paidCallbackUrl);
+            $pilipayOrder->redirectUrl  = pSQL($pageUrl);
             $pilipayOrder->shipper      = $order->total_shipping_tax_incl;
 
             $totalProductVatTax = 0;
