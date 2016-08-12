@@ -29,7 +29,7 @@
  *
  * required:
  * @property $version      string  API version.
- * @property $merchantNO   string  merchant number in account info page after signed up in pilibaba.com
+ * @property $merchantNo   string  merchant number in account info page after signed up in pilibaba.com
  * @property $currencyType string  USD/EUR/GBP/AUD/CAD/JPY...
  * @property $orderNo      string  order number in your site, which identifies an order
  * @property $orderAmount  number  total order amount in currencyType
@@ -89,7 +89,7 @@ class PilipayOrder extends PilipayModel
 
         $apiArray = array_map('strval', array(
             'version'      => $this->version,
-            'merchantNo'   => $this->merchantNO,
+            'merchantNo'   => $this->merchantNo,
             'currencyType' => $this->currencyType,
             'orderNo'      => $this->orderNo,
             'orderAmount'  => (int)round($this->orderAmount * 100),
@@ -188,9 +188,9 @@ class PilipayOrder extends PilipayModel
     {
         $params = array(
             'orderNo'     => pSQL($this->orderNo),
-            'merchantNo'  => pSQL($this->merchantNO),
+            'merchantNo'  => pSQL($this->merchantNo),
             'logisticsNo' => pSQL($logisticsNo),
-            'signMsg'     => md5($this->orderNo.$logisticsNo.$this->merchantNO.$this->appSecret),
+            'signMsg'     => md5($this->orderNo.$logisticsNo.$this->merchantNo.$this->appSecret),
         );
 
         PilipayLogger::instance()->log('info', "Update track NO: ".Tools::jsonEncode($params));
@@ -221,7 +221,7 @@ class PilipayOrder extends PilipayModel
     public function getBarcodePicUrl()
     {
         return PilipayConfig::getBarcodeUrl().'?'.http_build_query(array(
-                'merchantNo' => pSQL($this->merchantNO),
+                'merchantNo' => pSQL($this->merchantNo),
                 'orderNo'    => pSQL($this->orderNo),
             ));
     }

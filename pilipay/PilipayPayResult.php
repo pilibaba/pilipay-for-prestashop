@@ -48,7 +48,7 @@
  *     }
  *
  *
- * @property $merchantNO    string  the merchant number.
+ * @property $merchantNo    string  the merchant number.
  * @property $orderNo       string  the order number. It's been passed to pilibaba via PilipayOrder.
  * @property $orderAmount   number  the total amount of the order. Its unit is the currencyType in the submitted PilipayOrder.
  * @property $signType      string  "MD5"
@@ -62,7 +62,7 @@
  */
 class PilipayPayResult
 {
-    protected $_merchantNO;
+    protected $_merchantNo;
     protected $_orderNo;
     protected $_orderAmount;
     protected $_signType;
@@ -102,7 +102,7 @@ class PilipayPayResult
      */
     public function verify($appSecret, $throws = false)
     {
-        $signature = $this->_merchantNO;
+        $signature = $this->_merchantNo;
         $signature .= $this->_orderNo;
         $signature .= $this->_orderAmount;
         $signature .= $this->_signType;
@@ -194,11 +194,11 @@ class PilipayPayResult
 
     /**
      * @return mixed
-     * @property $merchantNO    string  the merchant number.
+     * @property $merchantNo    string  the merchant number.
      */
     public function getMerchantNO()
     {
-        return $this->_merchantNO;
+        return $this->_merchantNo;
     }
 
     /**

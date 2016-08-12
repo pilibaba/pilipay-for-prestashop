@@ -327,12 +327,12 @@ class Pilipay extends PaymentModule
             $trackingNumber = $order->shipping_number;
 
             $pilipayOrder             = new PilipayOrder();
-            $pilipayOrder->merchantNO = pSQL($this->merchantNo);
+            $pilipayOrder->merchantNo = pSQL($this->merchantNo);
             $pilipayOrder->appSecret  = pSQL($this->appSecret);
 
             if ($this->testmode == '1') {
                 PilipayConfig::setUseProductionEnv(false);
-                $pilipayOrder->merchantNO = pSQL('0210000202');
+                $pilipayOrder->merchantNo = pSQL('0210000202');
                 $pilipayOrder->appSecret  = pSQL('cbkmqa1s');
             }
             $pilipayOrder->orderNo = $order->id;
@@ -355,10 +355,10 @@ class Pilipay extends PaymentModule
         if ($this->testmode == '1') {
             PilipayConfig::setUseProductionEnv(false);
             $pilipayOrder             = new PilipayOrder();
-            $pilipayOrder->merchantNO = pSQL('0210000202');
+            $pilipayOrder->merchantNo = pSQL('0210000202');
         } else {
             $pilipayOrder             = new PilipayOrder();
-            $pilipayOrder->merchantNO = Configuration::get(self::PILIPAY_MERCHANT_NO);
+            $pilipayOrder->merchantNo = Configuration::get(self::PILIPAY_MERCHANT_NO);
         }
 
         $pilipayOrder->orderNo = $orderId;
@@ -591,11 +591,11 @@ class Pilipay extends PaymentModule
             if ($this->testmode == '1') {
                 PilipayConfig::setUseProductionEnv(false);
                 $pilipayOrder             = new PilipayOrder();
-                $pilipayOrder->merchantNO = pSQL('0210000202');
+                $pilipayOrder->merchantNo = pSQL('0210000202');
                 $pilipayOrder->appSecret  = pSQL('cbkmqa1s');
             } else {
                 $pilipayOrder             = new PilipayOrder();
-                $pilipayOrder->merchantNO = pSQL($this->merchantNo);
+                $pilipayOrder->merchantNo = pSQL($this->merchantNo);
                 $pilipayOrder->appSecret  = pSQL($this->appSecret);
             }
 
