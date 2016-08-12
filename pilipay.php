@@ -71,14 +71,12 @@ class Pilipay extends PaymentModule
         $this->currencies             = true;
         $this->currencies_mode        = 'checkbox';
 
-        $config = Configuration::getMultiple(
-            array(
+        $config = Configuration::getMultiple(array(
                 self::PILIPAY_MERCHANT_NO,
                 self::PILIPAY_APP_SECRET,
                 self::PILIPAY_WAREHOUSES,
                 self::PILIPAY_TESTMODE,
-            )
-        );
+            ));
         if (!empty($config[self::PILIPAY_MERCHANT_NO])) {
             $this->merchantNo = $config[self::PILIPAY_MERCHANT_NO];
         }
@@ -118,15 +116,7 @@ class Pilipay extends PaymentModule
     public function install()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, Tools::jsonEncode(func_get_args())));
-        if (!parent::install()
-            || !$this->registerHook('header')
-            || !$this->registerHook('payment')
-            || !$this->registerHook('actionAdminOrdersTrackingNumberUpdate')
-            || !$this->registerHook('paymentReturn')
-            || !$this->registerHook('shoppingcart')
-            || !$this->registerHook('displayAdminOrder')
-            || !$this->createOrderStates()
-        ) {
+        if (!parent::install() || !$this->registerHook('header') || !$this->registerHook('payment') || !$this->registerHook('actionAdminOrdersTrackingNumberUpdate') || !$this->registerHook('paymentReturn') || !$this->registerHook('shoppingcart') || !$this->registerHook('displayAdminOrder') || !$this->createOrderStates()) {
             return false;
         }
 
@@ -140,13 +130,7 @@ class Pilipay extends PaymentModule
     public function uninstall()
     {
         self::log(sprintf("Calling %s with %s", __METHOD__, Tools::jsonEncode(func_get_args())));
-        if (!Configuration::deleteByName(self::PILIPAY_MERCHANT_NO)
-            || !Configuration::deleteByName(self::PILIPAY_APP_SECRET)
-            || !Configuration::deleteByName(self::PILIPAY_CURRENCY)
-            || !Configuration::deleteByName(self::PILIPAY_WAREHOUSES)
-            || !Configuration::deleteByName(self::PILIPAY_TESTMODE)
-            || !parent::uninstall()
-        ) {
+        if (!Configuration::deleteByName(self::PILIPAY_MERCHANT_NO) || !Configuration::deleteByName(self::PILIPAY_APP_SECRET) || !Configuration::deleteByName(self::PILIPAY_CURRENCY) || !Configuration::deleteByName(self::PILIPAY_WAREHOUSES) || !Configuration::deleteByName(self::PILIPAY_TESTMODE) || !parent::uninstall()) {
             return false;
         }
 
@@ -236,7 +220,7 @@ class Pilipay extends PaymentModule
             'currency'   => $currency,
             'logistics'  => $logistics,
         );
-        $response = PilipayAutoregister::register($data);
+        $response   = PilipayAutoregister::register($data);
         $this->saveRegisterResponse($response);
     }
 
@@ -339,19 +323,18 @@ class Pilipay extends PaymentModule
         self::log(sprintf("Calling %s with %s", __METHOD__, Tools::jsonEncode(func_get_args())));
 
         try {
-            /**@var $order Order */
             $order          = $params['order'];
             $trackingNumber = $order->shipping_number;
 
             $pilipayOrder             = new PilipayOrder();
-            $pilipayOrder->merchantNO = Configuration::get(self::PILIPAY_MERCHANT_NO);
+            $pilipayOrder->merchantNO = pSQL($this->merchantNo);
+            $pilipayOrder->appSecret  = pSQL($this->appSecret);
 
             if ($this->testmode == '1') {
                 PilipayConfig::setUseProductionEnv(false);
-                $pilipayOrder             = new PilipayOrder();
                 $pilipayOrder->merchantNO = pSQL('0210000202');
+                $pilipayOrder->appSecret  = pSQL('cbkmqa1s');
             }
-
             $pilipayOrder->orderNo = $order->id;
             $pilipayOrder->updateTrackNo($trackingNumber);
         } catch (PilipayError $e) {
@@ -361,7 +344,7 @@ class Pilipay extends PaymentModule
 
     public function hookDisplayAdminOrder($order)
     {
-        self::log(sprintf("Calling %s with %s", __METHOD__, get_class(reset($order))));
+
         $orderId = $order['id_order'];
 
         $order = new Order($orderId);
@@ -662,10 +645,7 @@ class Pilipay extends PaymentModule
                 $pilipayOrder->addGood($pilipayGood);
             }
 
-            $pilipayOrder->tax = min(
-                0,
-                $cart->getOrderTotal(true) - $cart->getOrderTotal(false) - ($order->total_shipping_tax_incl - $order->total_shipping_tax_excl) - $totalProductVatTax
-            );
+            $pilipayOrder->tax = min(0, $cart->getOrderTotal(true) - $cart->getOrderTotal(false) - ($order->total_shipping_tax_incl - $order->total_shipping_tax_excl) - $totalProductVatTax);
             echo $pilipayOrder->renderSubmitForm();
             die;
         } catch (PilipayError $e) {

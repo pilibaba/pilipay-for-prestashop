@@ -72,7 +72,7 @@ class PilipayPayResult
     protected $_customerMail;
     protected $_errorCode;
     protected $_errorMessage;
-    protected $_dealId;
+    protected $_validation;
 
     /**
      * @param array $request
@@ -94,14 +94,23 @@ class PilipayPayResult
     }
 
     /**
-     * @param $appSecret
+     * @param      $appSecret
      * @param bool $throws whether throws exception when fails
+     *
      * @return bool whether is valid request
      * @throws PilipayError
      */
     public function verify($appSecret, $throws = false)
     {
-        $calcedSignMsg = md5($this->_merchantNo.$this->_orderNo.$this->_orderAmount.$this->_signType.$this->_dealId.$this->_fee.$this->_orderTime.$this->_customerMail.$appSecret);
+        $signature = $this->_merchantNO;
+        $signature .= $this->_orderNo;
+        $signature .= $this->_orderAmount;
+        $signature .= $this->_signType;
+        $signature .= $this->_fee;
+        $signature .= $this->_orderTime;
+        $signature .= $this->_customerMail;
+        $signature .= $appSecret;
+        $calcedSignMsg = md5($signature);
 
         if (strcasecmp($calcedSignMsg, $this->_signMsg) !== 0) {
             PilipayLogger::instance()->log("error", "Invalid signMsg: ".$this->_signMsg." with secret: ".$appSecret." with data: ".Tools::jsonEncode(get_object_vars($this)));
@@ -109,9 +118,13 @@ class PilipayPayResult
             if ($throws) {
                 throw new PilipayError(PilipayError::INVALID_SIGN, $this->_signMsg);
             }
+            $this->_validation = false;
 
             return false;
         }
+
+        $this->_validation = true;
+
         return true;
     }
 
@@ -120,7 +133,7 @@ class PilipayPayResult
      */
     public function isSuccess()
     {
-        return true; // currently, if there is a callback request, it means the payment is successfully completed.
+        return $this->_validation;
     }
 
     /**
@@ -231,15 +244,6 @@ class PilipayPayResult
     public function getOrderTime()
     {
         return $this->_orderTime;
-    }
-
-    /**
-     * @return mixed
-     * @property $dealId        string  the transaction ID in Pilibaba.
-     */
-    public function getDealId()
-    {
-        return $this->_dealId;
     }
 
     /**

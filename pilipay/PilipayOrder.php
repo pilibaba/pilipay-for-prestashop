@@ -78,7 +78,7 @@ class PilipayOrder extends PilipayModel
             ));
         }
 
-        // if the orderTime or sendTime is omitted, use current time
+        // if the orderTime is omitted, use current time
         if (empty($this->orderTime)) {
             $now             = date_create('now', timezone_open('Asia/Shanghai'))->format('Y-m-d H:i:s');
             $this->orderTime = $this->orderTime ? $this->orderTime : $now;
@@ -113,11 +113,9 @@ class PilipayOrder extends PilipayModel
                 'value' => $this->signType,
             ));
         }
-//        echo '<pre>';
-//        print_r($this->_goodsList);
-//        echo '</pre>';
-//        exit;
+
         $apiArray['goodsList'] = urlencode(Tools::jsonEncode($this->_goodsList));
+
         return $apiArray;
     }
 
@@ -192,7 +190,7 @@ class PilipayOrder extends PilipayModel
             'orderNo'     => pSQL($this->orderNo),
             'merchantNo'  => pSQL($this->merchantNO),
             'logisticsNo' => pSQL($logisticsNo),
-            'signMsg'     => md5($this->orderNo.$logisticsNo.$this->merchantNo.$this->appSecret),
+            'signMsg'     => md5($this->orderNo.$logisticsNo.$this->merchantNO.$this->appSecret),
         );
 
         PilipayLogger::instance()->log('info', "Update track NO: ".Tools::jsonEncode($params));
