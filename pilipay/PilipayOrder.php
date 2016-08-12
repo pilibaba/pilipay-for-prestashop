@@ -72,8 +72,9 @@ class PilipayOrder extends PilipayModel
 
         // check goods list
         if (empty($this->_goodsList)) {
-            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array('name'  => 'goodsList',
-                                                                                   'value' => json_encode($this->_goodsList),
+            throw new PilipayError(PilipayError::REQUIRED_ARGUMENT_NO_EXIST, array(
+                'name'  => 'goodsList',
+                'value' => Tools::jsonEncode($this->_goodsList),
             ));
         }
 

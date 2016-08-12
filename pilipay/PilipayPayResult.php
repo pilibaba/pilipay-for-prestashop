@@ -101,12 +101,10 @@ class PilipayPayResult
      */
     public function verify($appSecret, $throws = false)
     {
-        $calcedSignMsg = md5($this->_merchantNo . $this->_orderNo . $this->_orderAmount
-                            . $this->_signType . $this->_dealId . $this->_fee
-                            . $this->_orderTime . $this->_customerMail . $appSecret);
+        $calcedSignMsg = md5($this->_merchantNo.$this->_orderNo.$this->_orderAmount.$this->_signType.$this->_dealId.$this->_fee.$this->_orderTime.$this->_customerMail.$appSecret);
 
-        if (strcasecmp($calcedSignMsg, $this->_signMsg) !== 0){
-            PilipayLogger::instance()->log("error", "Invalid signMsg: " . $this->_signMsg . " with secret: " . $appSecret . " with data: " . Tools::jsonEncode(get_object_vars($this)));
+        if (strcasecmp($calcedSignMsg, $this->_signMsg) !== 0) {
+            PilipayLogger::instance()->log("error", "Invalid signMsg: ".$this->_signMsg." with secret: ".$appSecret." with data: ".Tools::jsonEncode(get_object_vars($this)));
 
             if ($throws) {
                 throw new PilipayError(PilipayError::INVALID_SIGN, $this->_signMsg);
@@ -148,8 +146,9 @@ class PilipayPayResult
      * @param $andDie bool
      * @return null
      */
-    public function returnDealResultToPilibaba($result, $andDie=true){
-        if ($result == 1 or $result == 'OK'){
+    public function returnDealResultToPilibaba($result, $andDie = true)
+    {
+        if ($result == 1 or $result == 'OK') {
             echo 'OK';
         } else {
             echo $result;

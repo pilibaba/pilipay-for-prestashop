@@ -36,7 +36,6 @@ class PilipayValidationModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        //Pilipay::log(sprintf("Calling %s with %s", __METHOD__, json_encode(func_get_args())));
         $this->module->performValidation($this->context);
     }
 }
