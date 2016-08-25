@@ -66,7 +66,7 @@ class Pilipay extends PaymentModule
         $this->author                 = 'Pilibaba';
         $this->controllers            = array('payment', 'validation');
         $this->is_eu_compatible       = 0; // = 1; todo: what should I do to be compatible with EU?
-        $this->ps_versions_compliancy = array('min' => '1.5.1', 'max' => '1.6.1.5',);
+        $this->ps_versions_compliancy = array('min' => '1.5.1', 'max' => _PS_VERSION_,);
         $this->module_key             = '1d52b16e6ed130c60b22ac7896f69bd2';
         $this->currencies             = true;
         $this->currencies_mode        = 'checkbox';

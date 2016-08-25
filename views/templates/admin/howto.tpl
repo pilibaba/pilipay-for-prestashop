@@ -44,9 +44,9 @@
 						<h4>Add a new carrier for Chinese customers who using pilipay payment.</h4><br />
 						<img style="max-width:80%" src="{$module_dir|escape:'html':'UTF-8'}views/img/create_new_carrier.png" class="pictos" /><br/>
 						<h4>use the recommended value:</h4>
-						1. Paste "<span style="color:#ee1010"> Pilibaba express 送货至中国 (如选择 Piliexpress, 请在下一步选择 Pilibaba 支付) </span>" in position 1; <br />
-						2. Paste "<span style="color:#ee1010"> 7〜14天直邮中国 </span>"  in position 2 ; <br />
-						3. Upload the logo  &nbsp;
+						1. Paste "<span style="color:#ee1010"> Pilibaba express 送货至中国 (如选择 Piliexpress, 请在下一步选择 Pilibaba 支付) </span>" in position 1; [sentences translate:Pilibaba express ONLY deliver to China (If you select PiliExpress,must choose Pilibaba Checkout button)] <br/>
+						2. Paste "<span style="color:#ee1010"> 7〜14天直邮中国 </span>" in position 2 ; [sentences translate:7~12 days to China customers hand] <br/>
+						3. Upload the logo
 						<img src="{$module_dir|escape:'html':'UTF-8'}views/img/Piliexpress.png" class="pictos" /> in position 3;<br/><br />
 						<img style="max-width:80%" src="{$module_dir|escape:'html':'UTF-8'}views/img/carrier_setting.png" class="pictos" /><br/>
 						
