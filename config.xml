@@ -2,7 +2,7 @@
 <module>
     <name>pilipay</name>
     <displayName><![CDATA[Pilipay]]></displayName>
-    <version><![CDATA[1.2.8]]></version>
+    <version><![CDATA[1.2.9]]></version>
     <description><![CDATA[Pilibaba All-in-One gateway provides a unique combined Payment & Logistics solution & Customs compliance for eCommerce platforms to China market. By using Pilibaba service, merchants will be able to sell to 1.3 Billion Chinese customers instantly.Here are core benefits from Pilibaba for both merchants and Chinese customers.]]></description>
     <author><![CDATA[Pilibaba]]></author>
     <tab><![CDATA[payments_gateways]]></tab>

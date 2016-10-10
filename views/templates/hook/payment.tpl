@@ -35,27 +35,6 @@
                 </span>
             </a>
 		</p>
-{*
-			    
-	    <p class="payment_module" id="pilipay_payment_button">
-	
-	        <form action="{$link->getModuleLink('pilipay', 'validation', [], true)|escape:'html':'UTF-8'}"
-	              method="post">
-	            
-	                <button type="submit"
-	                        title="{l s='Pay via Pilibaba (支持银联, 直邮中国)' mod='pilipay'}"
-	                        style="cursor: pointer; display: inline-block; padding: 0; margin: 0; border: none; width: auto; height: auto; text-align: center; background: none;"
-	                        >
-	                    <img src="{$this_path_bw|escape:'html':'UTF-8'}views/img/checkout.png"
-	                         alt="{l s='Pay via Pilibaba (支持银联, 直邮中国)' mod='pilipay'}"
-	                         style="height: 72px; width: auto;"/>
-	                    <span style="line-height: 72px; vertical-align: top">使用Pilbaba 中文收银台服务，支持银联卡，直邮至中国大陆全境，请确保第四步选择PiliExpress的物流方式.</span>
-	                </button>
-	            
-	        </form>
-	        
-		</p>
-*}
     </div>
 </div>
 

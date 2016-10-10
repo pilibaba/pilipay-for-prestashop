@@ -62,7 +62,7 @@ class Pilipay extends PaymentModule
     {
         $this->name                   = 'pilipay';
         $this->tab                    = 'payments_gateways';
-        $this->version                = '1.2.8';
+        $this->version                = '1.2.9';
         $this->author                 = 'Pilibaba';
         $this->controllers            = array('payment', 'validation');
         $this->is_eu_compatible       = 0; // = 1; todo: what should I do to be compatible with EU?
@@ -575,12 +575,16 @@ class Pilipay extends PaymentModule
 
         $order = new Order($this->currentOrder);
 
-        //以下几行代码用来修改订单地址到 pilibaba warehouse。
-        $id_address = $this->newAddress($order);
-        $sql        = 'UPDATE `'._DB_PREFIX_.'orders` 
+        $pilibabaWarehouseId = Tools::getValue(self::PILIPAY_WAREHOUSES, Configuration::get(self::PILIPAY_WAREHOUSES));
+
+        if ($pilibabaWarehouseId != '999') { // not direct
+            //以下几行代码用来修改订单地址到 pilibaba warehouse。
+            $id_address = $this->newAddress($order);
+            $sql        = 'UPDATE `'._DB_PREFIX_.'orders` 
                        SET `id_address_delivery` ='.(int)$id_address.',`id_address_invoice` = '.(int)$id_address.'
                        WHERE id_order='.(int)$this->currentOrder;
-        Db::getInstance()->execute($sql);
+            Db::getInstance()->execute($sql);
+        }
 
         if (!Validate::isLoadedObject($order)) {
             die($this->l('This order is invalid.', 'pilipay'));
